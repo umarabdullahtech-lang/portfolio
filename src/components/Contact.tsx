@@ -70,7 +70,7 @@ export default function Contact() {
     "w-full px-4 py-3 glass border border-white/8 focus:border-indigo-500/60 rounded-xl text-sm text-slate-200 placeholder-slate-600 outline-none transition-all duration-200 bg-transparent focus:bg-white/3";
 
   return (
-    <section id="contact" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative">
+    <section id="contact" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-indigo-600/8 blur-[120px]" />

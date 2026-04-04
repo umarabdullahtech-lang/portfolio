@@ -75,7 +75,7 @@ export default function Experience() {
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="experience" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative">
+    <section id="experience" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute bottom-0 left-1/4 w-[500px] h-[400px] rounded-full bg-violet-600/5 blur-[100px]" />
       </div>
