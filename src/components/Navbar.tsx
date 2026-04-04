@@ -8,6 +8,7 @@ const navLinks = [
   { label: "About", href: "#about" },
   { label: "Skills", href: "#skills" },
   { label: "Projects", href: "#projects" },
+  { label: "Blog", href: "#blog" },
   { label: "Experience", href: "#experience" },
   { label: "Contact", href: "#contact" },
 ];
@@ -98,7 +99,7 @@ export default function Navbar() {
             transition={{ duration: 0.2 }}
             className="md:hidden bg-[#0a0a0f]/95 backdrop-blur-md border-b border-white/5"
           >
-            <div className="px-4 py-4 flex flex-col gap-1">
+            <div className="px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-1">
               {navLinks.map((link) => (
                 <button
                   key={link.href}

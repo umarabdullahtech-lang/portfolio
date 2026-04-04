@@ -13,7 +13,7 @@ export default function Blog() {
   const featuredPosts = getFeaturedPosts();
 
   return (
-    <section id="blog" ref={ref} className="py-24 px-4 sm:px-6 relative">
+    <section id="blog" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] rounded-full bg-violet-600/5 blur-[120px]" />
       </div>
