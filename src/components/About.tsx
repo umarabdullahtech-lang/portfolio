@@ -5,13 +5,6 @@ import { useInView } from "framer-motion";
 import { useRef } from "react";
 import { Cpu, Globe, Zap, Users } from "lucide-react";
 
-const stats = [
-  { value: "5+", label: "Years Experience" },
-  { value: "30+", label: "Projects Shipped" },
-  { value: "10+", label: "AI Systems Built" },
-  { value: "99%", label: "Client Satisfaction" },
-];
-
 const highlights = [
   {
     icon: Cpu,
@@ -44,9 +37,23 @@ const fadeUp: Variants = {
   }),
 };
 
-export default function About() {
+type Props = { settings: Record<string, string> };
+
+export default function About({ settings }: Props) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
+
+  const stats = [
+    { value: settings.stat_years || "5+", label: settings.stat_years_label || "Years Experience" },
+    { value: settings.stat_projects || "30+", label: settings.stat_projects_label || "Projects Shipped" },
+    { value: settings.stat_ai || "10+", label: settings.stat_ai_label || "AI Systems Built" },
+    { value: settings.stat_satisfaction || "99%", label: settings.stat_satisfaction_label || "Client Satisfaction" },
+  ];
+
+  const subtitle = settings.about_subtitle || "Passionate engineer who loves turning ambitious ideas into production systems.";
+  const bio1 = settings.about_bio_1;
+  const bio2 = settings.about_bio_2;
+  const bio3 = settings.about_bio_3;
 
   return (
     <section id="about" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8">
@@ -66,7 +73,7 @@ export default function About() {
           <span className="gradient-text">Code & AI</span>
         </h2>
         <p className="text-slate-400 max-w-xl mx-auto">
-          Passionate engineer who loves turning ambitious ideas into production systems.
+          {subtitle}
         </p>
       </motion.div>
 
@@ -78,24 +85,9 @@ export default function About() {
           transition={{ duration: 0.7, delay: 0.1 }}
         >
           <div className="space-y-5 text-slate-400 leading-relaxed">
-            <p>
-              I&apos;m <span className="text-white font-semibold">Umar Abdullah</span>, a Senior
-              Software Engineer &amp; AI Engineer with a passion for building systems that matter.
-              With over 5 years of experience, I specialize in architecting AI-powered applications
-              and scalable SaaS platforms that drive real business value.
-            </p>
-            <p>
-              My journey started with full-stack web development, but quickly evolved into the
-              fascinating world of AI engineering — building RAG systems, autonomous agents, and
-              LLM-powered workflows that automate complex business processes.
-            </p>
-            <p>
-              When I&apos;m not coding, I&apos;m exploring the latest in AI research, contributing
-              to open-source projects, or sharing knowledge with the developer community. I believe
-              the best software is built at the intersection of{" "}
-              <span className="text-indigo-300">technical excellence</span> and{" "}
-              <span className="text-violet-300">human-centered design</span>.
-            </p>
+            {bio1 && <p>{bio1}</p>}
+            {bio2 && <p>{bio2}</p>}
+            {bio3 && <p>{bio3}</p>}
           </div>
 
           {/* Stats */}

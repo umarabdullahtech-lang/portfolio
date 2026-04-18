@@ -56,14 +56,20 @@ export default function Contact() {
     e.preventDefault();
     setStatus("loading");
 
-    // Simulate form submission — replace with your API endpoint
-    await new Promise((res) => setTimeout(res, 1500));
-
-    // For demo purposes, always succeed
-    setStatus("success");
-    setForm({ name: "", email: "", subject: "", message: "" });
-
-    setTimeout(() => setStatus("idle"), 4000);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setStatus("success");
+      setForm({ name: "", email: "", subject: "", message: "" });
+      setTimeout(() => setStatus("idle"), 4000);
+    } catch {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 4000);
+    }
   };
 
   const inputClass =
@@ -71,13 +77,11 @@ export default function Contact() {
 
   return (
     <section id="contact" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-indigo-600/8 blur-[120px]" />
       </div>
 
       <div className="max-w-6xl mx-auto relative">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -96,7 +100,6 @@ export default function Contact() {
         </motion.div>
 
         <div className="grid lg:grid-cols-5 gap-10">
-          {/* Left — info */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
@@ -139,7 +142,6 @@ export default function Contact() {
             </div>
           </motion.div>
 
-          {/* Right — form */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
@@ -150,86 +152,33 @@ export default function Contact() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-2" htmlFor="name">
-                      Name
-                    </label>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      placeholder="John Doe"
-                      value={form.name}
-                      onChange={handleChange}
-                      className={inputClass}
-                    />
+                    <label className="block text-xs font-medium text-slate-400 mb-2" htmlFor="name">Name</label>
+                    <input id="name" name="name" type="text" required placeholder="John Doe" value={form.name} onChange={handleChange} className={inputClass} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-2" htmlFor="email">
-                      Email
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      placeholder="john@example.com"
-                      value={form.email}
-                      onChange={handleChange}
-                      className={inputClass}
-                    />
+                    <label className="block text-xs font-medium text-slate-400 mb-2" htmlFor="email">Email</label>
+                    <input id="email" name="email" type="email" required placeholder="john@example.com" value={form.email} onChange={handleChange} className={inputClass} />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-2" htmlFor="subject">
-                    Subject
-                  </label>
-                  <input
-                    id="subject"
-                    name="subject"
-                    type="text"
-                    required
-                    placeholder="Project idea or opportunity"
-                    value={form.subject}
-                    onChange={handleChange}
-                    className={inputClass}
-                  />
+                  <label className="block text-xs font-medium text-slate-400 mb-2" htmlFor="subject">Subject</label>
+                  <input id="subject" name="subject" type="text" required placeholder="Project idea or opportunity" value={form.subject} onChange={handleChange} className={inputClass} />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-2" htmlFor="message">
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    required
-                    rows={5}
-                    placeholder="Tell me about your project, goals, and timeline..."
-                    value={form.message}
-                    onChange={handleChange}
-                    className={`${inputClass} resize-none`}
-                  />
+                  <label className="block text-xs font-medium text-slate-400 mb-2" htmlFor="message">Message</label>
+                  <textarea id="message" name="message" required rows={5} placeholder="Tell me about your project, goals, and timeline..." value={form.message} onChange={handleChange} className={`${inputClass} resize-none`} />
                 </div>
 
-                {/* Status message */}
                 {status === "success" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm"
-                  >
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
                     <CheckCircle size={16} />
                     Message sent! I&apos;ll get back to you within 24 hours.
                   </motion.div>
                 )}
                 {status === "error" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
-                  >
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
                     <AlertCircle size={16} />
                     Something went wrong. Please try again or email me directly.
                   </motion.div>

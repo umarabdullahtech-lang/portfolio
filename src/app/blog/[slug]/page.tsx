@@ -1,24 +1,16 @@
 import { notFound } from "next/navigation";
-import { getBlogPost, getBlogPosts } from "@/data/blog/posts";
+import { getBlogPost } from "@/lib/data";
 import BlogPostClient from "./BlogPostClient";
 
-interface BlogPostPageProps {
-  params: {
-    slug: string;
-  };
-}
+export const dynamic = "force-dynamic";
 
-// Generate static paths for all blog posts
-export async function generateStaticParams() {
-  const posts = getBlogPosts();
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
-}
+type Props = {
+  params: Promise<{ slug: string }>;
+};
 
-// Generate metadata for SEO
-export async function generateMetadata({ params }: BlogPostPageProps) {
-  const post = getBlogPost(params.slug);
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  const post = await getBlogPost(slug);
 
   if (!post) {
     return {
@@ -35,24 +27,39 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
       title: post.title,
       description: post.excerpt,
       type: 'article',
-      publishedTime: post.publishedAt,
-      authors: [post.author.name],
+      publishedTime: post.publishedAt.toISOString(),
+      authors: [post.author],
       tags: post.tags,
     },
     twitter: {
-      card: 'summary_large_image',
+      card: 'summary_large_image' as const,
       title: post.title,
       description: post.excerpt,
     },
   };
 }
 
-export default function BlogPostPage({ params }: BlogPostPageProps) {
-  const post = getBlogPost(params.slug);
+export default async function BlogPostPage({ params }: Props) {
+  const { slug } = await params;
+  const post = await getBlogPost(slug);
 
   if (!post) {
     notFound();
   }
 
-  return <BlogPostClient post={post} />;
+  return (
+    <BlogPostClient
+      post={{
+        slug: post.slug,
+        title: post.title,
+        excerpt: post.excerpt,
+        content: post.content,
+        publishedAt: post.publishedAt.toISOString(),
+        readingTime: post.readingTime,
+        tags: post.tags,
+        featured: post.featured,
+        author: { name: post.author },
+      }}
+    />
+  );
 }

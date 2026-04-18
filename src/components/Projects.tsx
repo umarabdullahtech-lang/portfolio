@@ -6,65 +6,27 @@ import { useRef, useState } from "react";
 import { ExternalLink, Bot, Globe, Zap, Database, ArrowRight } from "lucide-react";
 import { GithubIcon } from "@/components/SocialIcons";
 
-type Project = {
+type ProjectData = {
+  id: string;
   title: string;
   description: string;
-  longDesc: string;
-  tags: string[];
-  icon: React.ElementType;
-  color: string;
-  github?: string;
-  live?: string;
-  featured?: boolean;
+  techStack: string[];
+  liveUrl: string | null;
+  githubUrl: string | null;
+  featured: boolean;
+  sortOrder: number;
 };
 
-const projects: Project[] = [
-  {
-    title: "AI Customer Support Agent",
-    description: "Autonomous multi-agent system that handles customer queries, escalates issues, and learns from interactions.",
-    longDesc:
-      "Built a production-grade AI support system using LangChain agents, OpenAI GPT-4, and a custom RAG pipeline over a knowledge base. Handles 10,000+ queries/day with 92% auto-resolution rate.",
-    tags: ["LangChain", "Node.js", "OpenAI", "MongoDB", "BullMQ"],
-    icon: Bot,
-    color: "indigo",
-    github: "#",
-    live: "#",
-    featured: true,
-  },
-  {
-    title: "SaaS Analytics Platform",
-    description: "Multi-tenant analytics dashboard with real-time data pipelines and AI-powered insights.",
-    longDesc:
-      "Full-stack SaaS with Next.js frontend, Node.js microservices, PostgreSQL, and Redis. Features Stripe billing, role-based access, and AI-generated business insights using GPT.",
-    tags: ["Next.js", "Node.js", "PostgreSQL", "Redis", "Stripe"],
-    icon: Globe,
-    color: "violet",
-    github: "#",
-    live: "#",
-    featured: true,
-  },
-  {
-    title: "Web Scraping Automation Engine",
-    description: "Scalable scraping infrastructure with anti-detection, proxy rotation, and structured data extraction.",
-    longDesc:
-      "Engineered a distributed scraping system with Puppeteer clusters, BullMQ job queues, proxy rotation, and CAPTCHA solving. Processes 500K+ pages daily with 99.9% uptime.",
-    tags: ["Puppeteer", "Node.js", "BullMQ", "Docker", "MongoDB"],
-    icon: Zap,
-    color: "cyan",
-    github: "#",
-  },
-  {
-    title: "RAG Knowledge Base System",
-    description: "Enterprise document intelligence platform with semantic search and LLM-powered Q&A.",
-    longDesc:
-      "Designed a full RAG pipeline that ingests PDFs, embedds chunks via OpenAI embeddings, stores in vector DB, and answers questions with source attribution. Used in production at 3 enterprises.",
-    tags: ["Python", "LangChain", "OpenAI", "PostgreSQL", "FastAPI"],
-    icon: Database,
-    color: "emerald",
-    github: "#",
-    live: "#",
-  },
-];
+type Props = { projects: ProjectData[] };
+
+const iconMap: Record<number, React.ElementType> = {
+  0: Bot,
+  1: Globe,
+  2: Zap,
+  3: Database,
+};
+
+const colors = ["indigo", "violet", "cyan", "emerald"];
 
 const colorBorder: Record<string, string> = {
   indigo: "border-indigo-500/30 hover:border-indigo-500/60",
@@ -85,7 +47,7 @@ const colorTag: Record<string, string> = {
   emerald: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
 };
 
-export default function Projects() {
+export default function Projects({ projects }: Props) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -97,7 +59,6 @@ export default function Projects() {
       </div>
 
       <div className="max-w-6xl mx-auto relative">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -115,86 +76,75 @@ export default function Projects() {
           </p>
         </motion.div>
 
-        {/* Project cards */}
         <div className="grid sm:grid-cols-2 gap-6">
-          {projects.map((project, i) => (
-            <motion.div
-              key={project.title}
-              initial={{ opacity: 0, y: 40 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: i * 0.1, duration: 0.6 }}
-              className={`glass rounded-2xl p-6 border ${colorBorder[project.color]} transition-all duration-300 flex flex-col`}
-              whileHover={{ y: -4 }}
-            >
-              {/* Top row */}
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-11 h-11 rounded-xl border flex items-center justify-center ${colorIcon[project.color]}`}>
-                  <project.icon size={20} />
-                </div>
-                {project.featured && (
-                  <span className="text-xs px-2 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-medium">
-                    Featured
-                  </span>
-                )}
-              </div>
+          {projects.map((project, i) => {
+            const color = colors[i % colors.length];
+            const Icon = iconMap[i % 4];
+            const desc = project.description;
+            const shortDesc = desc.length > 120 ? desc.slice(0, 120) + "..." : desc;
+            const isExpanded = expanded === project.id;
 
-              <h3 className="text-white font-bold text-lg mb-2">{project.title}</h3>
-
-              <p className="text-slate-400 text-sm leading-relaxed mb-4 flex-1">
-                {expanded === project.title ? project.longDesc : project.description}
-              </p>
-
-              <button
-                onClick={() => setExpanded(expanded === project.title ? null : project.title)}
-                className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 mb-4 transition-colors cursor-pointer"
+            return (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, y: 40 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ delay: i * 0.1, duration: 0.6 }}
+                className={`glass rounded-2xl p-6 border ${colorBorder[color]} transition-all duration-300 flex flex-col`}
+                whileHover={{ y: -4 }}
               >
-                {expanded === project.title ? "Show less" : "Read more"}
-                <ArrowRight
-                  size={12}
-                  className={`transition-transform ${expanded === project.title ? "rotate-90" : ""}`}
-                />
-              </button>
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`w-11 h-11 rounded-xl border flex items-center justify-center ${colorIcon[color]}`}>
+                    <Icon size={20} />
+                  </div>
+                  {project.featured && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-medium">
+                      Featured
+                    </span>
+                  )}
+                </div>
 
-              {/* Tags */}
-              <div className="flex flex-wrap gap-1.5 mb-5">
-                {project.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className={`text-xs px-2 py-0.5 rounded-full border ${colorTag[project.color]}`}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
+                <h3 className="text-white font-bold text-lg mb-2">{project.title}</h3>
 
-              {/* Links */}
-              <div className="flex items-center gap-3 mt-auto">
-                {project.github && (
-                  <a
-                    href={project.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+                <p className="text-slate-400 text-sm leading-relaxed mb-4 flex-1">
+                  {isExpanded ? desc : shortDesc}
+                </p>
+
+                {desc.length > 120 && (
+                  <button
+                    onClick={() => setExpanded(isExpanded ? null : project.id)}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 mb-4 transition-colors cursor-pointer"
                   >
-                    <GithubIcon size={14} /> Code
-                  </a>
+                    {isExpanded ? "Show less" : "Read more"}
+                    <ArrowRight size={12} className={`transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                  </button>
                 )}
-                {project.live && (
-                  <a
-                    href={project.live}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
-                  >
-                    <ExternalLink size={14} /> Live Demo
-                  </a>
-                )}
-              </div>
-            </motion.div>
-          ))}
+
+                <div className="flex flex-wrap gap-1.5 mb-5">
+                  {project.techStack.map((tag) => (
+                    <span key={tag} className={`text-xs px-2 py-0.5 rounded-full border ${colorTag[color]}`}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-3 mt-auto">
+                  {project.githubUrl && project.githubUrl !== "#" && (
+                    <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
+                      <GithubIcon size={14} /> Code
+                    </a>
+                  )}
+                  {project.liveUrl && project.liveUrl !== "#" && (
+                    <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
+                      <ExternalLink size={14} /> Live Demo
+                    </a>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
-        {/* View more */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
