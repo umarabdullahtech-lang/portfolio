@@ -41,11 +41,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slug
 
     return NextResponse.json({ post });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Internal server error';
+    const message = err instanceof Error ? err.message : '';
     if (message.includes('Record to update not found')) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -58,10 +58,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ s
     await prisma.blogPost.delete({ where: { slug } });
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Internal server error';
+    const message = err instanceof Error ? err.message : '';
     if (message.includes('Record to delete does not exist')) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

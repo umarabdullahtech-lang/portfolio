@@ -15,6 +15,9 @@ export async function POST(request: Request) {
   if (error) return error;
 
   const body = await request.json();
-  const project = await prisma.project.create({ data: body });
+  const { title, description, techStack, liveUrl, githubUrl, image, featured, sortOrder } = body;
+  const project = await prisma.project.create({
+    data: { title, description, techStack, liveUrl, githubUrl, image, featured, sortOrder },
+  });
   return NextResponse.json({ project }, { status: 201 });
 }

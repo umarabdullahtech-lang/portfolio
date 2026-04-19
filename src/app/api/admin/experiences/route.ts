@@ -15,6 +15,9 @@ export async function POST(request: Request) {
   if (error) return error;
 
   const body = await request.json();
-  const experience = await prisma.experience.create({ data: body });
+  const { company, role, period, description, location, type, current, sortOrder } = body;
+  const experience = await prisma.experience.create({
+    data: { company, role, period, description, location, type, current, sortOrder },
+  });
   return NextResponse.json({ experience }, { status: 201 });
 }

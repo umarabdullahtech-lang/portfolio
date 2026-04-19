@@ -9,17 +9,26 @@ import {
 type Tab = "dashboard" | "blog" | "projects" | "experiences" | "skills" | "settings" | "contacts";
 
 export default function AdminPage() {
-  const [token, setToken] = useState<string | null>(null);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [tab, setTab] = useState<Tab>("dashboard");
 
   useEffect(() => {
-    const saved = localStorage.getItem("admin_token");
-    if (saved) setToken(saved);
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((r) => {
+        if (r.ok) setAuthenticated(true);
+      })
+      .finally(() => setChecking(false));
   }, []);
 
-  if (!token) return <LoginForm onLogin={(t) => { setToken(t); localStorage.setItem("admin_token", t); }} />;
+  if (checking) return null;
 
-  const logout = () => { setToken(null); localStorage.removeItem("admin_token"); };
+  if (!authenticated) return <LoginForm onLogin={() => setAuthenticated(true)} />;
+
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    setAuthenticated(false);
+  };
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -33,7 +42,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex">
-      {/* Sidebar */}
       <aside className="w-64 border-r border-white/5 p-6 flex flex-col">
         <div className="flex items-center gap-2 mb-8">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
@@ -63,22 +71,20 @@ export default function AdminPage() {
         </button>
       </aside>
 
-      {/* Content */}
       <main className="flex-1 p-8 overflow-auto">
-        {tab === "dashboard" && <DashboardTab token={token} />}
-        {tab === "blog" && <BlogTab token={token} />}
-        {tab === "projects" && <CrudTab token={token} entity="projects" fields={projectFields} />}
-        {tab === "experiences" && <CrudTab token={token} entity="experiences" fields={experienceFields} />}
-        {tab === "skills" && <CrudTab token={token} entity="skills" fields={skillFields} />}
-        {tab === "settings" && <SettingsTab token={token} />}
-        {tab === "contacts" && <ContactsTab token={token} />}
+        {tab === "dashboard" && <DashboardTab />}
+        {tab === "blog" && <BlogTab />}
+        {tab === "projects" && <CrudTab entity="projects" fields={projectFields} />}
+        {tab === "experiences" && <CrudTab entity="experiences" fields={experienceFields} />}
+        {tab === "skills" && <CrudTab entity="skills" fields={skillFields} />}
+        {tab === "settings" && <SettingsTab />}
+        {tab === "contacts" && <ContactsTab />}
       </main>
     </div>
   );
 }
 
-// === Login Form ===
-function LoginForm({ onLogin }: { onLogin: (token: string) => void }) {
+function LoginForm({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -93,11 +99,12 @@ function LoginForm({ onLogin }: { onLogin: (token: string) => void }) {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      onLogin(data.token);
+      onLogin();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
@@ -117,16 +124,18 @@ function LoginForm({ onLogin }: { onLogin: (token: string) => void }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+            <label htmlFor="login-email" className="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
+            <input id="login-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+              autoComplete="email"
               className="w-full px-4 py-2.5 glass border border-white/10 rounded-lg text-sm text-white placeholder-slate-600 outline-none focus:border-indigo-500/60 bg-transparent" placeholder="admin@example.com" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Password</label>
+            <label htmlFor="login-password" className="block text-xs font-medium text-slate-400 mb-1.5">Password</label>
             <div className="relative">
-              <input type={showPw ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required
+              <input id="login-password" type={showPw ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required
+                autoComplete="current-password"
                 className="w-full px-4 py-2.5 pr-10 glass border border-white/10 rounded-lg text-sm text-white placeholder-slate-600 outline-none focus:border-indigo-500/60 bg-transparent" placeholder="********" />
-              <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+              <button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? "Hide password" : "Show password"} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
@@ -142,15 +151,14 @@ function LoginForm({ onLogin }: { onLogin: (token: string) => void }) {
   );
 }
 
-// === Dashboard ===
-function DashboardTab({ token }: { token: string }) {
+function DashboardTab() {
   const [stats, setStats] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    fetch("/api/admin/stats", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/admin/stats", { credentials: "include" })
       .then((r) => r.json())
       .then(setStats);
-  }, [token]);
+  }, []);
 
   const cards = [
     { label: "Blog Posts", value: stats.posts, color: "indigo" },
@@ -176,8 +184,7 @@ function DashboardTab({ token }: { token: string }) {
   );
 }
 
-// === Blog Tab ===
-function BlogTab({ token }: { token: string }) {
+function BlogTab() {
   const [posts, setPosts] = useState<Record<string, unknown>[]>([]);
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
   const [creating, setCreating] = useState(false);
@@ -194,7 +201,8 @@ function BlogTab({ token }: { token: string }) {
     const method = isNew ? "POST" : "PUT";
     await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(data),
     });
     setEditing(null);
@@ -204,21 +212,12 @@ function BlogTab({ token }: { token: string }) {
 
   const remove = async (slug: string) => {
     if (!confirm("Delete this post?")) return;
-    await fetch(`/api/blog/${slug}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await fetch(`/api/blog/${slug}`, { method: "DELETE", credentials: "include" });
     load();
   };
 
   if (editing || creating) {
-    return (
-      <BlogForm
-        post={editing}
-        onSave={save}
-        onCancel={() => { setEditing(null); setCreating(false); }}
-      />
-    );
+    return <BlogForm post={editing} onSave={save} onCancel={() => { setEditing(null); setCreating(false); }} />;
   }
 
   return (
@@ -268,15 +267,10 @@ function BlogForm({ post, onSave, onCancel }: {
     e.preventDefault();
     onSave({
       ...(post?.id ? { id: post.id } : {}),
-      slug: form.slug,
-      title: form.title,
-      excerpt: form.excerpt,
-      content: form.content,
+      slug: form.slug, title: form.title, excerpt: form.excerpt, content: form.content,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      category: form.category || null,
-      readingTime: form.readingTime,
-      status: form.status,
-      featured: form.featured,
+      category: form.category || null, readingTime: form.readingTime,
+      status: form.status, featured: form.featured,
     });
   };
 
@@ -339,7 +333,6 @@ function BlogForm({ post, onSave, onCancel }: {
   );
 }
 
-// === Generic CRUD Tab ===
 type FieldDef = { key: string; label: string; type: "text" | "number" | "textarea" | "boolean" | "tags"; };
 
 const projectFields: FieldDef[] = [
@@ -370,16 +363,16 @@ const skillFields: FieldDef[] = [
   { key: "sortOrder", label: "Sort Order", type: "number" },
 ];
 
-function CrudTab({ token, entity, fields }: { token: string; entity: string; fields: FieldDef[] }) {
+function CrudTab({ entity, fields }: { entity: string; fields: FieldDef[] }) {
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [editing, setEditing] = useState<Record<string, unknown> | null>(null);
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(() => {
-    fetch(`/api/admin/${entity}`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`/api/admin/${entity}`, { credentials: "include" })
       .then((r) => r.json())
       .then((d) => setItems(d[entity] || []));
-  }, [token, entity]);
+  }, [entity]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -391,7 +384,8 @@ function CrudTab({ token, entity, fields }: { token: string; entity: string; fie
     if (isNew) delete payload.id;
     await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(payload),
     });
     setEditing(null);
@@ -401,23 +395,12 @@ function CrudTab({ token, entity, fields }: { token: string; entity: string; fie
 
   const remove = async (id: string) => {
     if (!confirm("Delete this item?")) return;
-    await fetch(`/api/admin/${entity}/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await fetch(`/api/admin/${entity}/${id}`, { method: "DELETE", credentials: "include" });
     load();
   };
 
   if (editing || creating) {
-    return (
-      <CrudForm
-        item={editing}
-        fields={fields}
-        onSave={save}
-        onCancel={() => { setEditing(null); setCreating(false); }}
-        title={entity}
-      />
-    );
+    return <CrudForm item={editing} fields={fields} onSave={save} onCancel={() => { setEditing(null); setCreating(false); }} title={entity} />;
   }
 
   const displayField = fields[0].key;
@@ -513,16 +496,15 @@ function CrudForm({ item, fields, onSave, onCancel, title }: {
   );
 }
 
-// === Settings Tab ===
-function SettingsTab({ token }: { token: string }) {
+function SettingsTab() {
   const [settings, setSettings] = useState<{ key: string; value: string }[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/settings", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/admin/settings", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => setSettings(d.settings || []));
-  }, [token]);
+  }, []);
 
   const updateValue = (key: string, value: string) => {
     setSettings((prev) => prev.map((s) => (s.key === key ? { ...s, value } : s)));
@@ -532,7 +514,8 @@ function SettingsTab({ token }: { token: string }) {
     setSaving(true);
     await fetch("/api/admin/settings", {
       method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ settings }),
     });
     setSaving(false);
@@ -565,20 +548,20 @@ function SettingsTab({ token }: { token: string }) {
   );
 }
 
-// === Contacts Tab ===
-function ContactsTab({ token }: { token: string }) {
+function ContactsTab() {
   const [contacts, setContacts] = useState<Record<string, unknown>[]>([]);
 
   useEffect(() => {
-    fetch("/api/admin/contacts", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/admin/contacts", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => setContacts(d.contacts || []));
-  }, [token]);
+  }, []);
 
   const toggleRead = async (id: string, read: boolean) => {
     await fetch("/api/admin/contacts", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ id, read }),
     });
     setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, read } : c)));

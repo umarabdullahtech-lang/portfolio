@@ -8,7 +8,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
   const body = await request.json();
-  const experience = await prisma.experience.update({ where: { id }, data: body });
+  const { company, role, period, description, location, type, current, sortOrder } = body;
+  const experience = await prisma.experience.update({
+    where: { id },
+    data: { company, role, period, description, location, type, current, sortOrder },
+  });
   return NextResponse.json({ experience });
 }
 

@@ -15,6 +15,9 @@ export async function POST(request: Request) {
   if (error) return error;
 
   const body = await request.json();
-  const skill = await prisma.skill.create({ data: body });
+  const { name, category, proficiency, sortOrder } = body;
+  const skill = await prisma.skill.create({
+    data: { name, category, proficiency, sortOrder },
+  });
   return NextResponse.json({ skill }, { status: 201 });
 }
