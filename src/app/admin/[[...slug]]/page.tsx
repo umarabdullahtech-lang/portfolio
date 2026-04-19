@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   LogIn, LayoutDashboard, FileText, FolderKanban, Briefcase,
   Code2, Settings, Mail, LogOut, Plus, Pencil, Trash2, Save, X, Eye, EyeOff
@@ -8,10 +9,39 @@ import {
 
 type Tab = "dashboard" | "blog" | "projects" | "experiences" | "skills" | "settings" | "contacts";
 
+const SLUG_TO_TAB: Record<string, Tab> = {
+  "": "dashboard",
+  "dashboard": "dashboard",
+  "blog": "blog",
+  "posts": "blog",
+  "projects": "projects",
+  "experiences": "experiences",
+  "skills": "skills",
+  "settings": "settings",
+  "contacts": "contacts",
+};
+
+const TAB_TO_SLUG: Record<Tab, string> = {
+  dashboard: "",
+  blog: "blog",
+  projects: "projects",
+  experiences: "experiences",
+  skills: "skills",
+  settings: "settings",
+  contacts: "contacts",
+};
+
+function getTabFromPathname(pathname: string): Tab {
+  const segment = pathname.replace(/^\/admin\/?/, "").split("/")[0] || "";
+  return SLUG_TO_TAB[segment] ?? "dashboard";
+}
+
 export default function AdminPage() {
+  const router = useRouter();
+  const pathname = usePathname();
   const [authenticated, setAuthenticated] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const [tab, setTab] = useState<Tab>(() => getTabFromPathname(pathname));
 
   useEffect(() => {
     fetch("/api/auth/me", { credentials: "include" })
@@ -20,6 +50,19 @@ export default function AdminPage() {
       })
       .finally(() => setChecking(false));
   }, []);
+
+  // Sync tab state when URL changes externally (back/forward navigation)
+  useEffect(() => {
+    const newTab = getTabFromPathname(pathname);
+    setTab(newTab);
+  }, [pathname]);
+
+  const navigateToTab = useCallback((newTab: Tab) => {
+    setTab(newTab);
+    const slug = TAB_TO_SLUG[newTab];
+    const newPath = slug ? `/admin/${slug}` : "/admin";
+    router.push(newPath);
+  }, [router]);
 
   if (checking) return null;
 
@@ -54,7 +97,7 @@ export default function AdminPage() {
           {tabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              onClick={() => navigateToTab(key)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors cursor-pointer ${
                 tab === key ? "bg-indigo-500/10 text-indigo-400" : "text-slate-400 hover:text-white hover:bg-white/5"
               }`}
