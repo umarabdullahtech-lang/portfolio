@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createContactSubmission } from '@/lib/data';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { sanitizeContactField } from '@/lib/sanitize';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CONTACT_RATE_LIMIT = { maxAttempts: 5, windowMs: 15 * 60 * 1000 };
@@ -48,10 +47,10 @@ export async function POST(request: Request) {
     }
 
     const submission = await createContactSubmission({
-      name: sanitizeContactField(name),
-      email: sanitizeContactField(email),
-      subject: subject ? sanitizeContactField(subject) : null,
-      message: sanitizeContactField(message),
+      name: name.trim(),
+      email: email.trim(),
+      subject: subject ? subject.trim() : null,
+      message: message.trim(),
     });
     return NextResponse.json({ success: true, id: submission.id }, { status: 201 });
   } catch {
