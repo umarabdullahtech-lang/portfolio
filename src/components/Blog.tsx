@@ -5,12 +5,23 @@ import { useInView } from "framer-motion";
 import { useRef } from "react";
 import { Calendar, Clock, ArrowRight, BookOpen } from "lucide-react";
 import Link from "next/link";
-import { getFeaturedPosts } from "@/data/blog/posts";
 
-export default function Blog() {
+type BlogPostData = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  tags: string[];
+  featured: boolean;
+  publishedAt: Date;
+  readingTime: number;
+};
+
+type Props = { posts: BlogPostData[] };
+
+export default function Blog({ posts }: Props) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
-  const featuredPosts = getFeaturedPosts();
 
   return (
     <section id="blog" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative">
@@ -19,7 +30,6 @@ export default function Blog() {
       </div>
 
       <div className="max-w-6xl mx-auto relative">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -37,9 +47,8 @@ export default function Blog() {
           </p>
         </motion.div>
 
-        {/* Featured posts */}
         <div className="grid lg:grid-cols-2 gap-6 mb-12">
-          {featuredPosts.map((post, i) => (
+          {posts.map((post, i) => (
             <motion.article
               key={post.slug}
               initial={{ opacity: 0, y: 40 }}
@@ -48,11 +57,10 @@ export default function Blog() {
               className="glass rounded-2xl p-6 border border-violet-500/20 hover:border-violet-500/40 transition-all duration-300 group"
               whileHover={{ y: -4 }}
             >
-              {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2 text-violet-400 text-sm">
                   <Calendar size={16} />
-                  <time dateTime={post.publishedAt}>
+                  <time dateTime={new Date(post.publishedAt).toISOString()}>
                     {new Date(post.publishedAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -67,7 +75,6 @@ export default function Blog() {
                 )}
               </div>
 
-              {/* Content */}
               <h3 className="text-white font-bold text-xl mb-3 group-hover:text-violet-300 transition-colors">
                 {post.title}
               </h3>
@@ -76,7 +83,6 @@ export default function Blog() {
                 {post.excerpt}
               </p>
 
-              {/* Tags */}
               <div className="flex flex-wrap gap-1.5 mb-4">
                 {post.tags.slice(0, 3).map((tag) => (
                   <span
@@ -93,13 +99,11 @@ export default function Blog() {
                 )}
               </div>
 
-              {/* Footer */}
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-1 text-slate-500">
                   <Clock size={14} />
                   <span>{post.readingTime} min read</span>
                 </div>
-
                 <Link
                   href={`/blog/${post.slug}`}
                   className="flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors group-hover:gap-2"
@@ -112,7 +116,6 @@ export default function Blog() {
           ))}
         </div>
 
-        {/* View all blogs link */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}

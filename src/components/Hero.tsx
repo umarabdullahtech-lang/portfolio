@@ -4,12 +4,6 @@ import { motion } from "framer-motion";
 import { ArrowDown, Mail, Sparkles, Terminal } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/SocialIcons";
 
-const socialLinks = [
-  { icon: GithubIcon, href: "https://github.com/umarabdullahtech", label: "GitHub" },
-  { icon: LinkedinIcon, href: "https://linkedin.com/in/umarabdullahtech", label: "LinkedIn" },
-  { icon: Mail, href: "mailto:umar@example.com", label: "Email" },
-];
-
 const floatingBadges = [
   { label: "AI Engineer", delay: 0, x: -200, y: -80 },
   { label: "Node.js Expert", delay: 0.2, x: 200, y: -60 },
@@ -17,7 +11,14 @@ const floatingBadges = [
   { label: "LangChain", delay: 0.6, x: 190, y: 110 },
 ];
 
-export default function Hero() {
+type Props = { settings: Record<string, string> };
+
+export default function Hero({ settings }: Props) {
+  const socialLinks = [
+    { icon: GithubIcon, href: settings.social_github || "#", label: "GitHub" },
+    { icon: LinkedinIcon, href: settings.social_linkedin || "#", label: "LinkedIn" },
+    { icon: Mail, href: `mailto:${settings.contact_email || ""}`, label: "Email" },
+  ];
   const handleScroll = (href: string) => {
     const el = document.querySelector(href);
     if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -71,7 +72,7 @@ export default function Hero() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-indigo-500/20 text-sm text-indigo-300 mb-8"
         >
           <Sparkles size={14} className="text-indigo-400" />
-          Available for new opportunities
+          {settings.hero_badge || "Available for new opportunities"}
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
         </motion.div>
 
@@ -83,7 +84,7 @@ export default function Hero() {
           className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-white mb-4 leading-tight tracking-tight"
         >
           Hi, I&apos;m{" "}
-          <span className="gradient-text">Umar Abdullah</span>
+          <span className="gradient-text">{settings.hero_name || "Umar Abdullah"}</span>
         </motion.h1>
 
         {/* Title */}
@@ -95,7 +96,7 @@ export default function Hero() {
         >
           <Terminal size={20} className="text-indigo-400" />
           <p className="text-xl sm:text-2xl font-semibold text-slate-300">
-            Senior Software Engineer &amp; AI Engineer
+            {settings.hero_title || "Senior Software Engineer & AI Engineer"}
           </p>
         </motion.div>
 
@@ -106,12 +107,7 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed"
         >
-          I build{" "}
-          <span className="text-indigo-300 font-medium">AI-powered automation systems</span> and
-          scalable{" "}
-          <span className="text-violet-300 font-medium">SaaS platforms</span> that solve
-          real-world problems. From LLM pipelines to full-stack applications — I turn complex
-          ideas into production-ready software.
+          {settings.hero_description || "I build AI-powered automation systems and scalable SaaS platforms that solve real-world problems."}
         </motion.p>
 
         {/* CTA Buttons */}

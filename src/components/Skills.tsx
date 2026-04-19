@@ -4,54 +4,25 @@ import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
 
-const skillCategories = [
-  {
-    category: "Frontend",
-    color: "indigo",
-    skills: [
-      { name: "Next.js", level: 95 },
-      { name: "React", level: 95 },
-      { name: "TypeScript", level: 90 },
-      { name: "Tailwind CSS", level: 92 },
-    ],
-  },
-  {
-    category: "Backend",
-    color: "violet",
-    skills: [
-      { name: "Node.js", level: 97 },
-      { name: "Express", level: 95 },
-      { name: "Python", level: 88 },
-      { name: "REST / GraphQL", level: 90 },
-    ],
-  },
-  {
-    category: "AI / ML",
-    color: "cyan",
-    skills: [
-      { name: "LangChain", level: 90 },
-      { name: "OpenAI / GPT APIs", level: 93 },
-      { name: "RAG Pipelines", level: 88 },
-      { name: "AI Agents", level: 85 },
-    ],
-  },
-  {
-    category: "Infrastructure",
-    color: "emerald",
-    skills: [
-      { name: "Docker", level: 88 },
-      { name: "MongoDB", level: 92 },
-      { name: "PostgreSQL", level: 87 },
-      { name: "Bull / BullMQ", level: 90 },
-    ],
-  },
-];
+type SkillData = {
+  id: string;
+  name: string;
+  category: string;
+  proficiency: number;
+  sortOrder: number;
+};
 
-const techBadges = [
-  "Node.js", "Express", "Next.js", "React", "TypeScript", "Python",
-  "LangChain", "OpenAI", "Puppeteer", "BullMQ", "MongoDB", "PostgreSQL",
-  "Docker", "Redis", "Prisma", "Stripe", "AWS", "GitHub Actions",
-];
+type Props = {
+  skills: SkillData[];
+  settings: Record<string, string>;
+};
+
+const categoryColors: Record<string, string> = {
+  Frontend: "indigo",
+  Backend: "violet",
+  "AI / ML": "cyan",
+  Infrastructure: "emerald",
+};
 
 const colorMap: Record<string, string> = {
   indigo: "from-indigo-500 to-indigo-600",
@@ -74,9 +45,30 @@ const textMap: Record<string, string> = {
   emerald: "text-emerald-400",
 };
 
-export default function Skills() {
+export default function Skills({ skills, settings }: Props) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
+
+  // Group skills by category
+  const categories = new Map<string, SkillData[]>();
+  for (const skill of skills) {
+    const arr = categories.get(skill.category) || [];
+    arr.push(skill);
+    categories.set(skill.category, arr);
+  }
+
+  const skillCategories = Array.from(categories.entries()).map(([category, items]) => ({
+    category,
+    color: categoryColors[category] || "indigo",
+    skills: items.map((s) => ({ name: s.name, level: s.proficiency })),
+  }));
+
+  let techBadges: string[] = [];
+  try {
+    techBadges = JSON.parse(settings.tech_badges || "[]");
+  } catch {
+    techBadges = [];
+  }
 
   return (
     <section id="skills" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative">
@@ -112,9 +104,9 @@ export default function Skills() {
               initial={{ opacity: 0, y: 40 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: ci * 0.1, duration: 0.6 }}
-              className={`glass rounded-2xl p-6 border ${borderMap[cat.color]} hover:shadow-lg transition-all duration-300`}
+              className={`glass rounded-2xl p-6 border ${borderMap[cat.color] || "border-indigo-500/30"} hover:shadow-lg transition-all duration-300`}
             >
-              <h3 className={`text-sm font-bold uppercase tracking-wider ${textMap[cat.color]} mb-5`}>
+              <h3 className={`text-sm font-bold uppercase tracking-wider ${textMap[cat.color] || "text-indigo-400"} mb-5`}>
                 {cat.category}
               </h3>
               <div className="space-y-4">
@@ -126,7 +118,7 @@ export default function Skills() {
                     </div>
                     <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                       <motion.div
-                        className={`h-full rounded-full bg-gradient-to-r ${colorMap[cat.color]}`}
+                        className={`h-full rounded-full bg-gradient-to-r ${colorMap[cat.color] || "from-indigo-500 to-indigo-600"}`}
                         initial={{ width: 0 }}
                         animate={inView ? { width: `${skill.level}%` } : { width: 0 }}
                         transition={{ delay: ci * 0.1 + si * 0.1 + 0.4, duration: 0.8, ease: "easeOut" }}
@@ -140,28 +132,30 @@ export default function Skills() {
         </div>
 
         {/* Tech badge cloud */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.5, duration: 0.6 }}
-          className="text-center"
-        >
-          <p className="text-slate-500 text-sm mb-6 uppercase tracking-wider">Also working with</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {techBadges.map((tech, i) => (
-              <motion.span
-                key={tech}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={inView ? { opacity: 1, scale: 1 } : {}}
-                transition={{ delay: 0.6 + i * 0.04, duration: 0.3 }}
-                whileHover={{ scale: 1.08, y: -2 }}
-                className="px-3 py-1.5 glass rounded-full text-xs font-medium text-slate-300 border border-white/8 hover:border-indigo-500/30 hover:text-indigo-300 transition-all duration-200 cursor-default"
-              >
-                {tech}
-              </motion.span>
-            ))}
-          </div>
-        </motion.div>
+        {techBadges.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="text-center"
+          >
+            <p className="text-slate-500 text-sm mb-6 uppercase tracking-wider">Also working with</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {techBadges.map((tech, i) => (
+                <motion.span
+                  key={tech}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={inView ? { opacity: 1, scale: 1 } : {}}
+                  transition={{ delay: 0.6 + i * 0.04, duration: 0.3 }}
+                  whileHover={{ scale: 1.08, y: -2 }}
+                  className="px-3 py-1.5 glass rounded-full text-xs font-medium text-slate-300 border border-white/8 hover:border-indigo-500/30 hover:text-indigo-300 transition-all duration-200 cursor-default"
+                >
+                  {tech}
+                </motion.span>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
     </section>
   );
