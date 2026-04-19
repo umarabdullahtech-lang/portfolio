@@ -71,7 +71,7 @@ export default function Skills({ skills, settings }: Props) {
   }
 
   return (
-    <section id="skills" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative">
+    <section id="skills" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background accent */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-violet-600/5 blur-[100px]" />
