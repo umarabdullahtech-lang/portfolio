@@ -53,7 +53,7 @@ export default function Projects({ projects }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
-    <section id="projects" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative">
+    <section id="projects" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full bg-indigo-600/5 blur-[120px]" />
       </div>
