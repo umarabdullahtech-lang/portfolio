@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     const submission = await createContactSubmission({
       name: sanitizeContactField(name),
       email: sanitizeContactField(email),
-      subject: subject ? sanitizeContactField(subject) : null,
+      subject: subject ? sanitizeContactField(subject) : undefined,
       message: sanitizeContactField(message),
     });
     return NextResponse.json({ success: true, id: submission.id }, { status: 201 });
