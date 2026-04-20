@@ -4,6 +4,10 @@
 Polish portfolio and add features
 
 ## Active
+- 🔒 UMA-92: CSP hardening — remove unsafe-inline/unsafe-eval from script-src
+  - ✅ UMA-93: Audit complete — no dependency requires unsafe-eval in production
+  - ✅ UMA-94: Architecture review — nonce-based CSP via proxy.ts (ADR-0001)
+  - ⏳ UMA-95: Implementation — nonce-based CSP proxy (assigned to Engineer, unblocked)
 
 ## Blocked
 
@@ -18,3 +22,6 @@ Polish portfolio and add features
 - 🔴 H1: Next.js CVE GHSA-q4gf-8mx6-v5v3 (DoS) — upgrade to next@>=16.2.3
 - 🔴 H2: Admin JWT stored in localStorage — move to httpOnly cookie
 - 🔴 H3: No rate limiting on /api/auth/login — brute-force risk
+
+## Security Reviews
+- ✅ UMA-80: Security headers PR #9 — APPROVED (2026-04-20). All 7 headers present. Follow-up: UMA-92 (CSP unsafe-inline/unsafe-eval)
