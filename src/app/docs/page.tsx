@@ -8,9 +8,9 @@ import DocsClient from "./docs-client";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "API Reference — Umar Abdullah",
+  title: "API Documentation | Umar Abdullah",
   description:
-    "REST API documentation for umar-abdullah.com. Public and admin endpoints with examples.",
+    "Complete REST API documentation for umar-abdullah.com. Covers public endpoints, authentication, blog, projects, experiences, skills, and admin APIs with examples.",
 };
 
 export default async function DocsPage() {

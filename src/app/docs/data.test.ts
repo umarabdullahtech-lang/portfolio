@@ -72,10 +72,20 @@ describe("apiDocs data integrity", () => {
   });
 
   it("public endpoints should have auth: false", () => {
-    const publicPaths = ["/api/health", "/api/blog", "/api/contact", "/api/auth/login", "/api/auth/logout"];
+    const publicEndpoints = [
+      { method: "GET", path: "/api/health" },
+      { method: "GET", path: "/api/blog" },
+      { method: "GET", path: "/api/blog/:slug" },
+      { method: "POST", path: "/api/contact" },
+      { method: "POST", path: "/api/auth/login" },
+      { method: "POST", path: "/api/auth/logout" },
+    ];
     for (const group of apiDocs) {
       for (const ep of group.endpoints) {
-        if (publicPaths.includes(ep.path)) {
+        const isPublic = publicEndpoints.some(
+          (p) => p.method === ep.method && p.path === ep.path
+        );
+        if (isPublic) {
           expect(ep.auth).toBe(false);
         }
       }
@@ -102,9 +112,13 @@ describe("apiDocs data integrity", () => {
   });
 
   it("POST/PUT endpoints should have body examples or fields", () => {
+    const noBodyEndpoints = ["/api/auth/logout"];
     for (const group of apiDocs) {
       for (const ep of group.endpoints) {
-        if (ep.method === "POST" || ep.method === "PUT" || ep.method === "PATCH") {
+        if (
+          (ep.method === "POST" || ep.method === "PUT" || ep.method === "PATCH") &&
+          !noBodyEndpoints.includes(ep.path)
+        ) {
           const hasBody = ep.bodyFields?.length || ep.bodyExample;
           expect(hasBody).toBeTruthy();
         }
