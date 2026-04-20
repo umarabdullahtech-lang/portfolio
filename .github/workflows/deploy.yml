@@ -1,0 +1,115 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          # Needed so Next.js can reference these at build time if required
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT || 22 }}
+          script: |
+            set -euo pipefail
+
+            DEPLOY_DIR="/home/openclaw-assistant-jorge_user/projects/portfolio"
+            SERVICE="portfolio.service"
+            HEALTH_URL="http://localhost:3001/api/health"
+            PREVIOUS_COMMIT=$(git -C "$DEPLOY_DIR" rev-parse HEAD)
+
+            echo "=== Pulling latest changes ==="
+            cd "$DEPLOY_DIR"
+            git pull origin main
+
+            echo "=== Installing dependencies ==="
+            npm ci --production=false
+
+            echo "=== Running database migrations ==="
+            npx prisma migrate deploy
+
+            echo "=== Building application ==="
+            npm run build
+
+            echo "=== Restarting service ==="
+            sudo systemctl restart "$SERVICE"
+
+            echo "=== Waiting for service to come up ==="
+            sleep 5
+
+            echo "=== Running health check ==="
+            MAX_RETRIES=6
+            RETRY_INTERVAL=5
+            for i in $(seq 1 $MAX_RETRIES); do
+              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || true)
+              if [ "$HTTP_STATUS" = "200" ]; then
+                echo "Health check passed (attempt $i)"
+                exit 0
+              fi
+              echo "Health check attempt $i/$MAX_RETRIES: HTTP $HTTP_STATUS — retrying in ${RETRY_INTERVAL}s..."
+              sleep "$RETRY_INTERVAL"
+            done
+
+            echo "=== Health check failed — rolling back ==="
+            git checkout "$PREVIOUS_COMMIT"
+            npm ci --production=false
+            npm run build
+            sudo systemctl restart "$SERVICE"
+            echo "Rollback to $PREVIOUS_COMMIT complete."
+            exit 1
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const run_url = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
+            const commit_sha = context.sha.substring(0, 7);
+            const body = [
+              `## Deployment Failed`,
+              ``,
+              `**Commit:** \`${commit_sha}\` — ${context.payload.commits?.[0]?.message ?? 'no message'}`,
+              `**Branch:** \`${context.ref.replace('refs/heads/', '')}\``,
+              `**Run:** [View logs](${run_url})`,
+              ``,
+              `The production deploy failed. Check the run logs for details. A rollback was attempted automatically.`,
+            ].join('\n');
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title: `Deploy failed: ${commit_sha}`,
+              body,
+              labels: ['deploy-failure'],
+            });
