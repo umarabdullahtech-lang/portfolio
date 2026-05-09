@@ -123,6 +123,24 @@ curl -s http://localhost:3001/api/health
 
 ## Rollback Procedures
 
+### Automatic rollback (CI/CD pipeline)
+
+The deploy pipeline rolls back automatically in two scenarios:
+
+| Scenario | What happens |
+|----------|-------------|
+| `npm run build` fails (pre-restart) | Workspace is reset to the previous commit (`git checkout <prev>` + `npm ci`). The service is **never restarted**, so old code keeps running. |
+| Health check fails after service restart | Full rollback: `git checkout <prev>` + `npm ci` + `npm run build` + `systemctl restart`. Service is restored to the last good commit. |
+
+All rollback events are logged with a `ROLLBACK TRIGGERED` / `ROLLBACK COMPLETE` timestamp line to:
+```
+~/logs/deploy.log
+```
+
+A GitHub Issue labeled `deploy-failure` is also created with a link to the Actions run.
+
+### Manual rollback
+
 ```bash
 # Rollback to previous git commit
 git log --oneline -5  # find the target commit
@@ -156,8 +174,9 @@ Automated via GitHub Actions (`.github/workflows/deploy.yml`).
 | 6 | DB migrations | `npx prisma migrate deploy` (on server) |
 | 7 | Restart service | `sudo systemctl restart portfolio.service` |
 | 8 | Health check | `curl http://localhost:3001/api/health` (6 retries) |
-| 9 | Rollback | Auto-rollback to previous commit on health-check failure |
-| 10 | Failure notification | GitHub Issue created with run link |
+| 9 | Rollback (build failure) | Workspace reset to previous commit; service not restarted |
+| 9 | Rollback (health failure) | Full rollback: `git checkout` + `npm ci` + `npm run build` + `systemctl restart` |
+| 10 | Failure notification | GitHub Issue created with run link; rollback event logged to `~/logs/deploy.log` |
 
 ### Required GitHub Secrets
 

@@ -47,47 +47,108 @@ jobs:
             DEPLOY_DIR="/home/openclaw-assistant-jorge_user/projects/portfolio"
             SERVICE="portfolio.service"
             HEALTH_URL="http://localhost:3001/api/health"
+            LOG_DIR="/home/openclaw-assistant-jorge_user/logs"
+            LOG_FILE="$LOG_DIR/deploy.log"
             PREVIOUS_COMMIT=$(git -C "$DEPLOY_DIR" rev-parse HEAD)
 
-            echo "=== Pulling latest changes ==="
+            mkdir -p "$LOG_DIR"
+
+            log() {
+              local msg="[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] $*"
+              echo "$msg"
+              echo "$msg" >> "$LOG_FILE"
+            }
+
+            # Rollback after a failed health check (service was already restarted with new code).
+            # Checks out the previous commit, reinstalls, rebuilds, and restarts the service.
+            perform_rollback() {
+              local reason="$1"
+              log "ROLLBACK TRIGGERED — reason: $reason"
+              log "Rolling back to commit: $PREVIOUS_COMMIT"
+              cd "$DEPLOY_DIR"
+              if ! git checkout "$PREVIOUS_COMMIT"; then
+                log "ROLLBACK FAILED — git checkout error; manual intervention required"
+                return 1
+              fi
+              if ! npm ci --production=false; then
+                log "ROLLBACK FAILED — npm ci error; manual intervention required"
+                return 1
+              fi
+              if ! npm run build; then
+                log "ROLLBACK FAILED — npm run build error; manual intervention required"
+                return 1
+              fi
+              if ! sudo systemctl restart "$SERVICE"; then
+                log "ROLLBACK FAILED — systemctl restart error; manual intervention required"
+                return 1
+              fi
+              log "ROLLBACK COMPLETE — service restored to commit: $PREVIOUS_COMMIT"
+            }
+
+            # If anything fails before the service restart (pull, deps, build), the service
+            # was never restarted so old code is still running. Roll back the workspace so
+            # it stays in sync with what the service is actually serving.
+            on_pre_restart_error() {
+              trap - ERR  # prevent recursive triggering
+              log "PRE-DEPLOY STEP FAILED — workspace rollback to: $PREVIOUS_COMMIT (service unchanged)"
+              cd "$DEPLOY_DIR"
+              git checkout "$PREVIOUS_COMMIT" || log "WARNING: git checkout failed during workspace rollback"
+              npm ci --production=false 2>/dev/null || log "WARNING: npm ci failed during workspace rollback"
+              log "WORKSPACE ROLLBACK COMPLETE — old service version still running"
+            }
+            trap on_pre_restart_error ERR
+
+            log "=== Deploy started — previous commit: $PREVIOUS_COMMIT ==="
+
+            log "=== Pulling latest changes ==="
             cd "$DEPLOY_DIR"
             git pull origin main
+            NEW_COMMIT=$(git rev-parse HEAD)
+            log "New commit: $NEW_COMMIT"
 
-            echo "=== Installing dependencies ==="
+            log "=== Installing dependencies ==="
             npm ci --production=false
 
-            echo "=== Running database migrations ==="
+            log "=== Running database migrations ==="
             npx prisma migrate deploy
 
-            echo "=== Building application ==="
+            log "=== Building application ==="
             npm run build
 
-            echo "=== Restarting service ==="
+            # Build succeeded — clear the error trap before service restart so a restart
+            # failure does not trigger the workspace rollback path.
+            trap - ERR
+
+            log "=== Restarting service ==="
             sudo systemctl restart "$SERVICE"
 
-            echo "=== Waiting for service to come up ==="
+            log "=== Waiting for service to come up ==="
             sleep 5
 
-            echo "=== Running health check ==="
+            log "=== Running health check ==="
             MAX_RETRIES=6
             RETRY_INTERVAL=5
+            HEALTH_PASSED=false
+
             for i in $(seq 1 $MAX_RETRIES); do
               HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || true)
               if [ "$HTTP_STATUS" = "200" ]; then
-                echo "Health check passed (attempt $i)"
-                exit 0
+                log "Health check passed (attempt $i)"
+                HEALTH_PASSED=true
+                break
               fi
-              echo "Health check attempt $i/$MAX_RETRIES: HTTP $HTTP_STATUS — retrying in ${RETRY_INTERVAL}s..."
+              log "Health check attempt $i/$MAX_RETRIES: HTTP $HTTP_STATUS — retrying in ${RETRY_INTERVAL}s..."
               sleep "$RETRY_INTERVAL"
             done
 
-            echo "=== Health check failed — rolling back ==="
-            git checkout "$PREVIOUS_COMMIT"
-            npm ci --production=false
-            npm run build
-            sudo systemctl restart "$SERVICE"
-            echo "Rollback to $PREVIOUS_COMMIT complete."
-            exit 1
+            if [ "$HEALTH_PASSED" = "false" ]; then
+              log "HEALTH CHECK FAILED after $MAX_RETRIES attempts — initiating automatic rollback"
+              perform_rollback "health check failed after deploy to $NEW_COMMIT"
+              log "=== Deploy FAILED — rolled back to $PREVIOUS_COMMIT ==="
+              exit 1
+            fi
+
+            log "=== Deploy SUCCEEDED — running commit: $NEW_COMMIT ==="
 
       - name: Notify on failure
         if: failure()
@@ -104,7 +165,7 @@ jobs:
               `**Branch:** \`${context.ref.replace('refs/heads/', '')}\``,
               `**Run:** [View logs](${run_url})`,
               ``,
-              `The production deploy failed. Check the run logs for details. A rollback was attempted automatically.`,
+              `The production deploy failed. If the failure occurred after the service restart, an automatic rollback to the previous commit was attempted. Check \`~/logs/deploy.log\` on the server and the Actions run logs for details.`,
             ].join('\n');
             await github.rest.issues.create({
               owner,
