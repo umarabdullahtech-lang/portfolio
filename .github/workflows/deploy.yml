@@ -1,0 +1,176 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          # Needed so Next.js can reference these at build time if required
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT || 22 }}
+          script: |
+            set -euo pipefail
+
+            DEPLOY_DIR="/home/openclaw-assistant-jorge_user/projects/portfolio"
+            SERVICE="portfolio.service"
+            HEALTH_URL="http://localhost:3001/api/health"
+            LOG_DIR="/home/openclaw-assistant-jorge_user/logs"
+            LOG_FILE="$LOG_DIR/deploy.log"
+            PREVIOUS_COMMIT=$(git -C "$DEPLOY_DIR" rev-parse HEAD)
+
+            mkdir -p "$LOG_DIR"
+
+            log() {
+              local msg="[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] $*"
+              echo "$msg"
+              echo "$msg" >> "$LOG_FILE"
+            }
+
+            # Rollback after a failed health check (service was already restarted with new code).
+            # Checks out the previous commit, reinstalls, rebuilds, and restarts the service.
+            perform_rollback() {
+              local reason="$1"
+              log "ROLLBACK TRIGGERED — reason: $reason"
+              log "Rolling back to commit: $PREVIOUS_COMMIT"
+              cd "$DEPLOY_DIR"
+              if ! git checkout "$PREVIOUS_COMMIT"; then
+                log "ROLLBACK FAILED — git checkout error; manual intervention required"
+                return 1
+              fi
+              if ! npm ci --production=false; then
+                log "ROLLBACK FAILED — npm ci error; manual intervention required"
+                return 1
+              fi
+              if ! npm run build; then
+                log "ROLLBACK FAILED — npm run build error; manual intervention required"
+                return 1
+              fi
+              if ! sudo systemctl restart "$SERVICE"; then
+                log "ROLLBACK FAILED — systemctl restart error; manual intervention required"
+                return 1
+              fi
+              log "ROLLBACK COMPLETE — service restored to commit: $PREVIOUS_COMMIT"
+            }
+
+            # If anything fails before the service restart (pull, deps, build), the service
+            # was never restarted so old code is still running. Roll back the workspace so
+            # it stays in sync with what the service is actually serving.
+            on_pre_restart_error() {
+              trap - ERR  # prevent recursive triggering
+              log "PRE-DEPLOY STEP FAILED — workspace rollback to: $PREVIOUS_COMMIT (service unchanged)"
+              cd "$DEPLOY_DIR"
+              git checkout "$PREVIOUS_COMMIT" || log "WARNING: git checkout failed during workspace rollback"
+              npm ci --production=false 2>/dev/null || log "WARNING: npm ci failed during workspace rollback"
+              log "WORKSPACE ROLLBACK COMPLETE — old service version still running"
+            }
+            trap on_pre_restart_error ERR
+
+            log "=== Deploy started — previous commit: $PREVIOUS_COMMIT ==="
+
+            log "=== Pulling latest changes ==="
+            cd "$DEPLOY_DIR"
+            git pull origin main
+            NEW_COMMIT=$(git rev-parse HEAD)
+            log "New commit: $NEW_COMMIT"
+
+            log "=== Installing dependencies ==="
+            npm ci --production=false
+
+            log "=== Running database migrations ==="
+            npx prisma migrate deploy
+
+            log "=== Building application ==="
+            npm run build
+
+            # Build succeeded — clear the error trap before service restart so a restart
+            # failure does not trigger the workspace rollback path.
+            trap - ERR
+
+            log "=== Restarting service ==="
+            sudo systemctl restart "$SERVICE"
+
+            log "=== Waiting for service to come up ==="
+            sleep 5
+
+            log "=== Running health check ==="
+            MAX_RETRIES=6
+            RETRY_INTERVAL=5
+            HEALTH_PASSED=false
+
+            for i in $(seq 1 $MAX_RETRIES); do
+              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || true)
+              if [ "$HTTP_STATUS" = "200" ]; then
+                log "Health check passed (attempt $i)"
+                HEALTH_PASSED=true
+                break
+              fi
+              log "Health check attempt $i/$MAX_RETRIES: HTTP $HTTP_STATUS — retrying in ${RETRY_INTERVAL}s..."
+              sleep "$RETRY_INTERVAL"
+            done
+
+            if [ "$HEALTH_PASSED" = "false" ]; then
+              log "HEALTH CHECK FAILED after $MAX_RETRIES attempts — initiating automatic rollback"
+              perform_rollback "health check failed after deploy to $NEW_COMMIT"
+              log "=== Deploy FAILED — rolled back to $PREVIOUS_COMMIT ==="
+              exit 1
+            fi
+
+            log "=== Deploy SUCCEEDED — running commit: $NEW_COMMIT ==="
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const run_url = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
+            const commit_sha = context.sha.substring(0, 7);
+            const body = [
+              `## Deployment Failed`,
+              ``,
+              `**Commit:** \`${commit_sha}\` — ${context.payload.commits?.[0]?.message ?? 'no message'}`,
+              `**Branch:** \`${context.ref.replace('refs/heads/', '')}\``,
+              `**Run:** [View logs](${run_url})`,
+              ``,
+              `The production deploy failed. If the failure occurred after the service restart, an automatic rollback to the previous commit was attempted. Check \`~/logs/deploy.log\` on the server and the Actions run logs for details.`,
+            ].join('\n');
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title: `Deploy failed: ${commit_sha}`,
+              body,
+              labels: ['deploy-failure'],
+            });
