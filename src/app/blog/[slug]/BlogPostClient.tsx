@@ -164,7 +164,7 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
                     {children}
                   </blockquote>
                 ),
-                code: ({ className, children, ...props }: any) => {
+                code: ({ className, children, ...props }: React.ComponentPropsWithoutRef<'code'>) => {
                   const match = /language-(\w+)/.exec(className || '');
                   const isInline = !match;
 
@@ -182,7 +182,6 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
                         language={match[1]}
                         PreTag="div"
                         className="!bg-[#0f111a] !text-sm"
-                        {...props}
                       >
                         {String(children).replace(/\n$/, '')}
                       </SyntaxHighlighter>

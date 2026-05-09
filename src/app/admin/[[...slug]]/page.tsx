@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   LogIn, LayoutDashboard, FileText, FolderKanban, Briefcase,
@@ -41,7 +41,7 @@ export default function AdminPage() {
   const pathname = usePathname();
   const [authenticated, setAuthenticated] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [tab, setTab] = useState<Tab>(() => getTabFromPathname(pathname));
+  const tab = useMemo(() => getTabFromPathname(pathname), [pathname]);
 
   useEffect(() => {
     fetch("/api/auth/me", { credentials: "include" })
@@ -51,14 +51,7 @@ export default function AdminPage() {
       .finally(() => setChecking(false));
   }, []);
 
-  // Sync tab state when URL changes externally (back/forward navigation)
-  useEffect(() => {
-    const newTab = getTabFromPathname(pathname);
-    setTab(newTab);
-  }, [pathname]);
-
   const navigateToTab = useCallback((newTab: Tab) => {
-    setTab(newTab);
     const slug = TAB_TO_SLUG[newTab];
     const newPath = slug ? `/admin/${slug}` : "/admin";
     router.push(newPath);
