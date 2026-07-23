@@ -6,6 +6,7 @@ import {
   LogIn, LayoutDashboard, FileText, FolderKanban, Briefcase,
   Code2, Settings, Mail, LogOut, Plus, Pencil, Trash2, Save, X, Eye, EyeOff
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 type Tab = "dashboard" | "blog" | "projects" | "experiences" | "skills" | "settings" | "contacts";
 
@@ -66,7 +67,7 @@ export default function AdminPage() {
     setAuthenticated(false);
   };
 
-  const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
+  const tabs: { key: Tab; label: string; icon: LucideIcon }[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "blog", label: "Blog Posts", icon: FileText },
     { key: "projects", label: "Projects", icon: FolderKanban },

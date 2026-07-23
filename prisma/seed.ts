@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcryptjs';
+import { portfolioProjects } from '../src/data/projects.js';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -238,58 +239,39 @@ These patterns help create APIs that are not just functional, but truly type-saf
   console.log(`${blogPosts.length} blog posts created`);
 
   // Projects
-  const projects = [
-    {
-      title: 'AI Customer Support Agent',
-      description: 'Autonomous multi-agent system that handles customer queries, escalates issues, and learns from interactions. Built with LangChain agents, OpenAI GPT-4, and a custom RAG pipeline. Handles 10,000+ queries/day with 92% auto-resolution rate.',
-      techStack: ['LangChain', 'Node.js', 'OpenAI', 'MongoDB', 'BullMQ'],
-      githubUrl: '#',
-      liveUrl: '#',
-      featured: true,
-      sortOrder: 1,
-    },
-    {
-      title: 'SaaS Analytics Platform',
-      description: 'Multi-tenant analytics dashboard with real-time data pipelines and AI-powered insights. Full-stack SaaS with Next.js frontend, Node.js microservices, PostgreSQL, and Redis. Features Stripe billing and 50K MAU.',
-      techStack: ['Next.js', 'Node.js', 'PostgreSQL', 'Redis', 'Stripe'],
-      githubUrl: '#',
-      liveUrl: '#',
-      featured: true,
-      sortOrder: 2,
-    },
-    {
-      title: 'Web Scraping Automation Engine',
-      description: 'Scalable scraping infrastructure with anti-detection, proxy rotation, and structured data extraction. Distributed system with Puppeteer clusters, BullMQ job queues. Processes 500K+ pages daily with 99.9% uptime.',
-      techStack: ['Puppeteer', 'Node.js', 'BullMQ', 'Docker', 'MongoDB'],
-      githubUrl: '#',
-      featured: false,
-      sortOrder: 3,
-    },
-    {
-      title: 'RAG Knowledge Base System',
-      description: 'Enterprise document intelligence platform with semantic search and LLM-powered Q&A. Full RAG pipeline that ingests PDFs, embedds chunks via OpenAI embeddings, stores in vector DB. Used in production at 3 enterprises.',
-      techStack: ['Python', 'LangChain', 'OpenAI', 'PostgreSQL', 'FastAPI'],
-      githubUrl: '#',
-      liveUrl: '#',
-      featured: false,
-      sortOrder: 4,
-    },
+  const placeholderTitles = [
+    'AI Customer Support Agent',
+    'SaaS Analytics Platform',
+    'Web Scraping Automation Engine',
+    'RAG Knowledge Base System',
   ];
+  await prisma.project.deleteMany({ where: { title: { in: placeholderTitles } } });
 
-  for (const project of projects) {
-    const existing = await prisma.project.findFirst({ where: { title: project.title } });
-    if (!existing) {
-      await prisma.project.create({ data: project });
-    }
+  for (const project of portfolioProjects) {
+    const data = {
+      title: project.title,
+      description: project.description,
+      techStack: project.techStack,
+      liveUrl: project.liveUrl,
+      githubUrl: project.githubUrl,
+      image: project.image,
+      featured: project.featured,
+      sortOrder: project.sortOrder,
+    };
+    await prisma.project.upsert({
+      where: { id: project.id },
+      update: data,
+      create: { id: project.id, ...data },
+    });
   }
-  console.log(`${projects.length} projects created`);
+  console.log(`${portfolioProjects.length} live projects synchronized`);
 
   // Experiences
   const experiences = [
     {
       company: 'TechCorp Inc.',
       role: 'Senior AI Engineer',
-      period: '2023 – Present',
+      period: '2023 - Present',
       description: 'Architected and deployed multi-agent AI systems handling 10K+ daily conversations. Built custom RAG pipelines reducing support ticket volume by 40%. Led a team of 4 engineers building LLM-powered product features.',
       location: 'Remote',
       type: 'work',
@@ -299,7 +281,7 @@ These patterns help create APIs that are not just functional, but truly type-saf
     {
       company: 'StartupXYZ',
       role: 'Senior Full-Stack Engineer',
-      period: '2021 – 2023',
+      period: '2021 - 2023',
       description: 'Built and scaled a multi-tenant SaaS platform from 0 to 50K monthly active users. Designed microservices architecture with Node.js, PostgreSQL, and Redis. Implemented Stripe billing, automated onboarding, and real-time dashboards.',
       location: 'Remote',
       type: 'work',
@@ -309,7 +291,7 @@ These patterns help create APIs that are not just functional, but truly type-saf
     {
       company: 'Digital Agency Co.',
       role: 'Software Engineer',
-      period: '2019 – 2021',
+      period: '2019 - 2021',
       description: 'Delivered 15+ client projects across web scraping, automation, and web apps. Built Puppeteer-based scraping infrastructure processing 200K pages/day. Developed RESTful APIs and integrated third-party services.',
       location: 'On-site',
       type: 'work',
@@ -319,8 +301,8 @@ These patterns help create APIs that are not just functional, but truly type-saf
     {
       company: 'University of Technology',
       role: 'B.Sc. Computer Science',
-      period: '2015 – 2019',
-      description: 'Graduated with honors — specialization in Software Engineering. Capstone project: AI-powered plagiarism detection system. Active member of the Computer Science Society.',
+      period: '2015 - 2019',
+      description: 'Graduated with honors, specializing in Software Engineering. Capstone project: AI-powered plagiarism detection system. Active member of the Computer Science Society.',
       location: 'On-campus',
       type: 'education',
       current: false,
@@ -332,6 +314,8 @@ These patterns help create APIs that are not just functional, but truly type-saf
     const existing = await prisma.experience.findFirst({ where: { company: exp.company, role: exp.role } });
     if (!existing) {
       await prisma.experience.create({ data: exp });
+    } else {
+      await prisma.experience.update({ where: { id: existing.id }, data: exp });
     }
   }
   console.log(`${experiences.length} experiences created`);
@@ -372,14 +356,18 @@ These patterns help create APIs that are not just functional, but truly type-saf
   const settings = [
     { key: 'hero_name', value: 'Umar Abdullah' },
     { key: 'hero_title', value: 'Senior Software Engineer & AI Engineer' },
-    { key: 'hero_description', value: 'I build AI-powered automation systems and scalable SaaS platforms that solve real-world problems. From LLM pipelines to full-stack applications — I turn complex ideas into production-ready software.' },
+    { key: 'hero_description', value: 'I build AI-powered automation systems and scalable SaaS platforms that solve real-world problems. From LLM pipelines to full-stack applications, I turn complex ideas into production-ready software.' },
     { key: 'hero_badge', value: 'Available for new opportunities' },
-    { key: 'about_bio_1', value: "I'm Umar Abdullah, a Senior Software Engineer & AI Engineer with a passion for building systems that matter. With over 5 years of experience, I specialize in architecting AI-powered applications and scalable SaaS platforms that drive real business value." },
-    { key: 'about_bio_2', value: 'My journey started with full-stack web development, but quickly evolved into the fascinating world of AI engineering — building RAG systems, autonomous agents, and LLM-powered workflows that automate complex business processes.' },
+    { key: 'about_bio_1', value: "I'm Umar Abdullah, a Senior Software Engineer & AI Engineer with a passion for building systems that matter. With 10 years in software engineering and 5 years specializing in AI engineering, I architect AI-powered applications and scalable SaaS platforms that drive real business value." },
+    { key: 'about_bio_2', value: 'My journey started with full-stack web development, but quickly evolved into AI engineering: building RAG systems, autonomous agents, and LLM-powered workflows that automate complex business processes.' },
     { key: 'about_bio_3', value: "When I'm not coding, I'm exploring the latest in AI research, contributing to open-source projects, or sharing knowledge with the developer community. I believe the best software is built at the intersection of technical excellence and human-centered design." },
     { key: 'about_subtitle', value: 'Passionate engineer who loves turning ambitious ideas into production systems.' },
-    { key: 'stat_years', value: '5+' },
-    { key: 'stat_years_label', value: 'Years Experience' },
+    { key: 'stat_years', value: '10+' },
+    { key: 'stat_years_label', value: 'Years Software Engineering' },
+    { key: 'stat_software_years', value: '10+' },
+    { key: 'stat_software_years_label', value: 'Years Software Engineering' },
+    { key: 'stat_ai_years', value: '5+' },
+    { key: 'stat_ai_years_label', value: 'Years AI Engineering' },
     { key: 'stat_projects', value: '30+' },
     { key: 'stat_projects_label', value: 'Projects Shipped' },
     { key: 'stat_ai', value: '10+' },

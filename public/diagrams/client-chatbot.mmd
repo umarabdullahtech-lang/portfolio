@@ -1,0 +1,94 @@
+flowchart LR
+  OWNER["Organization / Bot Owner"] --> CONSOLE["Next.js Tenant Console"]
+  ENDUSER["Customer / Visitor"] --> DELIVERY
+
+  subgraph PRODUCT["Assistant Product Control"]
+    CONSOLE --> ACCOUNT["Account + Role Management"]
+    CONSOLE --> SUBSCRIPTION["Stripe Subscription + Portal"]
+    CONSOLE --> BOT["Create / Update / Retire Bot"]
+    BOT --> SETTINGS["Prompt / Access / Leads / Appearance"]
+    CONSOLE --> INBOX["Inbox + Conversation Review"]
+    CONSOLE --> REFINEMENT["QA Refinement + Feedback"]
+  end
+
+  subgraph SOURCE["Multi-Source Ingestion"]
+    FILES["PDF / Documents / Text"]
+    WEB["URL / Website / Sitemap"]
+    MEDIA["YouTube / Audio / Video"]
+    EXTRACT["Source-Specific Extraction"]
+    OBJECT_STORE["S3 / Google Cloud Storage"]
+    NORMALIZE["Normalize + Chunk + Metadata"]
+    EMBEDDINGS["Embedding Generation"]
+    PINECONE[("Pinecone Tenant Index")]
+    CONSOLE --> FILES
+    CONSOLE --> WEB
+    CONSOLE --> MEDIA
+    FILES --> EXTRACT
+    WEB --> EXTRACT
+    MEDIA --> EXTRACT
+    EXTRACT --> OBJECT_STORE
+    EXTRACT --> NORMALIZE --> EMBEDDINGS --> PINECONE
+  end
+
+  subgraph DELIVERY["Assistant Delivery"]
+    HOSTED["Hosted Chat"]
+    EMBED["Bundled Website Widget"]
+    GENERIC_API["Generic Conversation API"]
+  end
+
+  subgraph RAG["Grounded Conversation Graph"]
+    MAIN_API["Express Main API"]
+    CONTEXT["Tenant + Bot + Conversation Context"]
+    ANALYZE["Analyze Question"]
+    DECIDE["Decide Whether to Retrieve"]
+    RETRIEVE["Semantic Retrieval"]
+    GRADE["Grade Retrieved Documents"]
+    GENERATE["Generate Grounded Answer"]
+    NODATA["Explicit No-Data Response"]
+    DELIVERY --> MAIN_API --> CONTEXT --> ANALYZE --> DECIDE
+    DECIDE -->|"retrieve"| RETRIEVE --> GRADE
+    PINECONE --> RETRIEVE
+    GRADE -->|"relevant"| GENERATE
+    GRADE -->|"insufficient"| NODATA
+    DECIDE -->|"direct"| GENERATE
+    SETTINGS --> GENERATE
+  end
+
+  subgraph PROVIDERS["Model Layer"]
+    LANGGRAPH["LangGraph Orchestration"]
+    OPENAI["OpenAI"]
+    ANTHROPIC["Anthropic"]
+    GEMINI["Google Gemini"]
+    GENERATE --> LANGGRAPH
+    LANGGRAPH --> OPENAI
+    LANGGRAPH --> ANTHROPIC
+    LANGGRAPH --> GEMINI
+  end
+
+  subgraph STATE["Operational State"]
+    MYSQL[("MySQL")]
+    HISTORY["Conversation History"]
+    REVIEWS["Likes / Reviews / Bulk QA Updates"]
+    LEADS["Captured Leads"]
+    GENERATE --> HISTORY --> MYSQL
+    DELIVERY --> LEADS --> MYSQL
+    INBOX --> HISTORY
+    REFINEMENT --> REVIEWS --> MYSQL
+    REVIEWS -.->|"policy feedback"| SETTINGS
+  end
+
+  GENERATE --> DELIVERY --> ENDUSER
+  BOT --> MAIN_API
+  SETTINGS --> EMBED
+
+  subgraph OPS["Runtime Boundaries"]
+    DOCKER["Docker Compose"]
+    NGINX["nginx Reverse Proxy"]
+    LOGS["Winston Logging + OpenAPI Docs"]
+    DOCKER -.-> CONSOLE
+    DOCKER -.-> MAIN_API
+    DOCKER -.-> EXTRACT
+    NGINX -.-> DELIVERY
+    MAIN_API --> LOGS
+  end
+

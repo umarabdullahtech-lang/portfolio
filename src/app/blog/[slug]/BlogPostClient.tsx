@@ -1,251 +1,133 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Calendar, Clock, ArrowLeft, Tag } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowUpRight, Clock } from "lucide-react";
+import { useGSAP } from "@gsap/react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
 import type { BlogPost } from "@/types/blog";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import styles from "./BlogPost.module.css";
+
+if (typeof window !== "undefined") gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 interface BlogPostClientProps {
   post: BlogPost;
+  settings: Record<string, string>;
 }
 
-export default function BlogPostClient({ post }: BlogPostClientProps) {
+export default function BlogPostClient({ post, settings }: BlogPostClientProps) {
+  const scope = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const update = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 0);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
+  useGSAP(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    gsap.from("[data-post-title]", { yPercent: 105, duration: 1.25, ease: "power4.out" });
+    gsap.to("[data-post-orbit]", { yPercent: 52, rotate: 110, opacity: .12, ease: "none", scrollTrigger: { trigger: "[data-post-hero]", start: "top top", end: "bottom top", scrub: .8 } });
+    gsap.from("[data-article-body]", { opacity: 0, y: 70, duration: 1.1, ease: "power3.out", scrollTrigger: { trigger: "[data-article-body]", start: "top 88%", once: true } });
+  }, { scope });
+
   return (
-    <div className="min-h-screen bg-[#0a0a0f] pt-20">
-      {/* Background decorations */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-violet-600/5 blur-[120px]" />
-        <div className="absolute bottom-1/4 left-1/4 w-[400px] h-[400px] rounded-full bg-indigo-600/5 blur-[120px]" />
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 relative">
-        {/* Back button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <Link
-            href="/blog"
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft size={16} />
-            Back to Blog
-          </Link>
-        </motion.div>
-
-        {/* Article header */}
-        <motion.header
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-12"
-        >
-          {/* Featured badge */}
-          {post.featured && (
-            <div className="mb-4">
-              <span className="inline-block px-3 py-1 text-sm rounded-full bg-violet-500/10 text-violet-300 border border-violet-500/20 font-medium">
-                Featured Post
-              </span>
-            </div>
-          )}
-
-          {/* Title */}
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-            {post.title}
-          </h1>
-
-          {/* Excerpt */}
-          <p className="text-xl text-slate-400 leading-relaxed mb-8">
-            {post.excerpt}
-          </p>
-
-          {/* Meta information */}
-          <div className="flex flex-wrap items-center gap-6 text-sm text-slate-400 mb-8">
-            <div className="flex items-center gap-2">
-              <Calendar size={16} />
-              <time dateTime={post.publishedAt}>
-                {new Date(post.publishedAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </time>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock size={16} />
-              <span>{post.readingTime} min read</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span>By</span>
-              <span className="text-white font-medium">{post.author.name}</span>
-            </div>
+    <div className={styles.page} ref={scope}>
+      <div className={styles.progress} aria-hidden="true"><i style={{ transform: `scaleX(${progress / 100})` }} /></div>
+      <Navbar />
+      <main id="main-content">
+        <header className={styles.hero} data-post-hero>
+          <div className={styles.orbit} data-post-orbit aria-hidden="true"><i /><i /><i /></div>
+          <Link href="/blog" className={styles.back}><ArrowLeft /> Journal index</Link>
+          <div className={styles.metaLine}>
+            <span>{post.featured ? "Featured field note" : "Engineering field note"}</span>
+            <time dateTime={post.publishedAt}>{new Date(post.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time>
+            <span>{post.readingTime} min read</span>
           </div>
-
-          {/* Tags */}
-          <div className="flex items-center gap-2 mb-8">
-            <Tag size={16} className="text-slate-500" />
-            <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 text-sm rounded-full bg-violet-500/10 text-violet-300 border border-violet-500/20"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+          <div className={styles.titleClip}>
+            <h1 data-post-title>{post.title}</h1>
           </div>
-        </motion.header>
+          <div className={styles.heroFooter}>
+            <p>{post.excerpt}</p>
+            <div>{post.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+          </div>
+        </header>
 
-        {/* Article content */}
-        <motion.article
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="glass rounded-2xl p-8 lg:p-12 border border-white/10"
-        >
-          <div className="prose prose-invert prose-violet max-w-none">
+        <section className={styles.articleLayout}>
+          <aside>
+            <div>
+              <span>Author</span>
+              <strong>{post.author.name}</strong>
+            </div>
+            <div>
+              <span>Reading time</span>
+              <strong><Clock /> {post.readingTime} minutes</strong>
+            </div>
+            <div>
+              <span>Progress</span>
+              <strong>{Math.round(progress)}%</strong>
+            </div>
+            <Link href="/#contact">Discuss a system <ArrowUpRight /></Link>
+          </aside>
+
+          <article className={styles.article} data-article-body>
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-                h1: ({ children }) => (
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-6 mt-8 first:mt-0 gradient-text">
-                    {children}
-                  </h1>
-                ),
-                h2: ({ children }) => (
-                  <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 mt-8 border-b border-slate-800 pb-2">
-                    {children}
-                  </h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-4 mt-6">
-                    {children}
-                  </h3>
-                ),
-                p: ({ children }) => (
-                  <p className="text-slate-300 leading-relaxed mb-4">
-                    {children}
-                  </p>
-                ),
-                ul: ({ children }) => (
-                  <ul className="list-disc list-inside text-slate-300 mb-4 space-y-2">
-                    {children}
-                  </ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="list-decimal list-inside text-slate-300 mb-4 space-y-2">
-                    {children}
-                  </ol>
-                ),
-                li: ({ children }) => (
-                  <li className="text-slate-300">
-                    {children}
-                  </li>
-                ),
-                strong: ({ children }) => (
-                  <strong className="text-white font-semibold">
-                    {children}
-                  </strong>
-                ),
-                em: ({ children }) => (
-                  <em className="text-violet-300">
-                    {children}
-                  </em>
-                ),
-                blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-violet-500 pl-4 italic text-slate-400 bg-violet-500/5 rounded-r-lg py-2 my-6">
-                    {children}
-                  </blockquote>
-                ),
-                code: ({ className, children, ...props }: React.ComponentPropsWithoutRef<'code'>) => {
-                  const match = /language-(\w+)/.exec(className || '');
-                  const isInline = !match;
-
-                  return isInline ? (
-                    <code
-                      className="bg-slate-800 text-violet-300 px-1.5 py-0.5 rounded text-sm font-mono"
-                      {...props}
-                    >
-                      {children}
-                    </code>
-                  ) : (
-                    <div className="rounded-lg overflow-hidden my-6">
-                      <SyntaxHighlighter
-                        style={oneDark}
-                        language={match[1]}
-                        PreTag="div"
-                        className="!bg-[#0f111a] !text-sm"
-                      >
-                        {String(children).replace(/\n$/, '')}
+                h1: ({ children }) => <h2 className={styles.articleTitle}>{children}</h2>,
+                h2: ({ children }) => <h2>{children}</h2>,
+                h3: ({ children }) => <h3>{children}</h3>,
+                p: ({ children }) => <p>{children}</p>,
+                ul: ({ children }) => <ul>{children}</ul>,
+                ol: ({ children }) => <ol>{children}</ol>,
+                li: ({ children }) => <li>{children}</li>,
+                strong: ({ children }) => <strong>{children}</strong>,
+                em: ({ children }) => <em>{children}</em>,
+                blockquote: ({ children }) => <blockquote>{children}</blockquote>,
+                code: ({ className, children, ...props }: React.ComponentPropsWithoutRef<"code">) => {
+                  const match = /language-(\w+)/.exec(className || "");
+                  return match ? (
+                    <div className={styles.codeBlock}>
+                      <div><span /><span /><span /><strong>{match[1]}</strong></div>
+                      <SyntaxHighlighter style={oneDark} language={match[1]} PreTag="div" customStyle={{ margin: 0, padding: "1.5rem", background: "#0b0d13", fontSize: ".84rem" }}>
+                        {String(children).replace(/\n$/, "")}
                       </SyntaxHighlighter>
                     </div>
-                  );
+                  ) : <code className={styles.inlineCode} {...props}>{children}</code>;
                 },
-                a: ({ children, href }) => (
-                  <a
-                    href={href}
-                    className="text-violet-400 hover:text-violet-300 transition-colors underline decoration-violet-400/50 hover:decoration-violet-300"
-                    target={href?.startsWith('http') ? '_blank' : undefined}
-                    rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  >
-                    {children}
-                  </a>
-                ),
-                table: ({ children }) => (
-                  <div className="overflow-x-auto my-6">
-                    <table className="w-full border-collapse border border-slate-700 rounded-lg">
-                      {children}
-                    </table>
-                  </div>
-                ),
-                th: ({ children }) => (
-                  <th className="border border-slate-700 px-4 py-2 bg-slate-800 text-white font-semibold text-left">
-                    {children}
-                  </th>
-                ),
-                td: ({ children }) => (
-                  <td className="border border-slate-700 px-4 py-2 text-slate-300">
-                    {children}
-                  </td>
-                ),
+                a: ({ children, href }) => <a href={href} target={href?.startsWith("http") ? "_blank" : undefined} rel={href?.startsWith("http") ? "noreferrer" : undefined}>{children}</a>,
+                table: ({ children }) => <div className={styles.tableWrap}><table>{children}</table></div>,
+                th: ({ children }) => <th>{children}</th>,
+                td: ({ children }) => <td>{children}</td>,
               }}
             >
               {post.content}
             </ReactMarkdown>
-          </div>
-        </motion.article>
+          </article>
+        </section>
 
-        {/* Navigation */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-12 mb-24"
-        >
-          <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            <Link
-              href="/blog"
-              className="flex items-center gap-2 px-6 py-3 glass border border-white/10 hover:border-violet-500/40 text-slate-300 hover:text-white rounded-xl text-sm font-medium transition-all duration-200"
-            >
-              <ArrowLeft size={16} />
-              All Posts
-            </Link>
-            <Link
-              href="/#contact"
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-indigo-500 text-white rounded-xl text-sm font-medium transition-all duration-200 hover:from-violet-600 hover:to-indigo-600"
-            >
-              Get in Touch
-            </Link>
+        <section className={styles.articleEnd}>
+          <span>End of transmission</span>
+          <h2>Ideas become useful when they enter the system.</h2>
+          <div>
+            <Link href="/blog"><ArrowLeft /> All field notes</Link>
+            <Link href="/work">Explore the work <ArrowUpRight /></Link>
           </div>
-        </motion.div>
-      </div>
+        </section>
+      </main>
+      <Footer settings={settings} />
     </div>
   );
 }

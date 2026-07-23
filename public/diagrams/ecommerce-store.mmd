@@ -1,0 +1,70 @@
+flowchart LR
+  SHOPPER["Shopper"] --> ROUTE["Next.js App Router"]
+
+  subgraph INTENT["Storefront Intent"]
+    CATALOG["Catalog / Collections"]
+    SEARCH["Search + Sort"]
+    PRODUCT["Product Detail"]
+    CART_UI["Cart"]
+    ROUTE --> CATALOG
+    ROUTE --> SEARCH
+    ROUTE --> PRODUCT
+    ROUTE --> CART_UI
+  end
+
+  subgraph PROVIDER["Commerce Provider Boundary"]
+    ADAPTER["Shopify Data Adapter"]
+    GRAPHQL["Storefront GraphQL API"]
+    FRAGMENTS["Typed Queries + Fragments"]
+    CATALOG --> ADAPTER
+    SEARCH --> ADAPTER
+    PRODUCT --> ADAPTER
+    FRAGMENTS --> ADAPTER --> GRAPHQL
+    GRAPHQL --> ADAPTER
+  end
+
+  subgraph RENDER["Server-First Rendering"]
+    RSC["React Server Components"]
+    SUSPENSE["Suspense + Streaming"]
+    HTML["Search-Ready HTML"]
+    ADAPTER --> RSC --> SUSPENSE --> HTML
+    HTML --> SHOPPER
+  end
+
+  subgraph CACHE["Event-Aware Caching"]
+    TAGS["Product / Collection Cache Tags"]
+    FETCH["Cached Server Fetches"]
+    WEBHOOK["Shopify Revalidation Webhook"]
+    RSC --> FETCH
+    TAGS --> FETCH
+    GRAPHQL --> WEBHOOK --> TAGS
+  end
+
+  subgraph MUTATION["Cart Mutation Boundary"]
+    ACTIONS["Server Actions"]
+    CART_ID["Cart Identity Cookie"]
+    CART_API["Shopify Cart API"]
+    CART_UI --> ACTIONS
+    CART_ID --> ACTIONS
+    ACTIONS --> CART_API --> GRAPHQL
+    GRAPHQL --> CART_UI
+  end
+
+  subgraph DISCOVERY["Search + Share Surfaces"]
+    META["Dynamic Metadata"]
+    OG["Dynamic Open Graph Images"]
+    SITEMAP["Sitemap + Robots"]
+    PRODUCT --> META
+    PRODUCT --> OG
+    CATALOG --> SITEMAP
+  end
+
+  CART_UI --> CHECKOUT["Shopify Hosted Checkout"] --> ORDER["Completed Order"] --> SHOPPER
+
+  subgraph DELIVERY["Runtime"]
+    VERCEL["Vercel Edge / Server Runtime"]
+    ENV["Provider Environment Configuration"]
+    ENV --> VERCEL
+    VERCEL -.-> ROUTE
+  end
+

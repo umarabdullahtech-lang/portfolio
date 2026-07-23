@@ -5,7 +5,7 @@ import { getSiteSettings } from "@/lib/data";
 import { apiDocs } from "./data";
 import DocsClient from "./docs-client";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "API Documentation | Umar Abdullah",

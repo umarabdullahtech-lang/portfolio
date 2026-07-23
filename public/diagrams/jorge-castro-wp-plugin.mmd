@@ -1,0 +1,83 @@
+flowchart LR
+  ADMIN["WordPress Administrator"] --> SETTINGS["JorgeCastro Plugin Settings"]
+  SAAS["JorgeCastro SaaS"] --> HTTPS["HTTPS Request"]
+
+  subgraph TRUST["Connection + Trust Boundary"]
+    SETTINGS --> CONNECT["Connect / Disconnect Lifecycle"]
+    CONNECT --> REGISTER["Register Site URL + Webhook"]
+    KEY["Stored API Key"]
+    HTTPS --> AUTH["Permission Callback"]
+    KEY --> AUTH
+    WPADMIN["manage_options Capability"] --> AUTH
+    AUTH -->|"constant-time key match or admin"| ROUTER
+  end
+
+  subgraph API["Versioned REST Namespace: jorgecastro/v1"]
+    ROUTER["WordPress REST Router"]
+    CONNECTION["Connection + Request Logs"]
+    AUTHORS["Author Endpoints"]
+    POSTS["Bulk Posts + Post Mutation"]
+    PAGES["Pages + Custom Post Types"]
+    PRODUCTS["WooCommerce Products"]
+    CATEGORIES["Blog + Product Categories"]
+    ROUTER --> CONNECTION
+    ROUTER --> AUTHORS
+    ROUTER --> POSTS
+    ROUTER --> PAGES
+    ROUTER --> PRODUCTS
+    ROUTER --> CATEGORIES
+  end
+
+  subgraph HANDLERS["Domain Handlers"]
+    AUTHOR_HANDLER["Author Handler"]
+    PAGE_HANDLER["Page / Post Handler"]
+    WC_HANDLER["WooCommerce Handler"]
+    MEDIA_HANDLER["Media + Featured Image Handling"]
+    SEO_HANDLER["SEO Metadata Adapter"]
+    AUTHORS --> AUTHOR_HANDLER
+    POSTS --> PAGE_HANDLER
+    PAGES --> PAGE_HANDLER
+    PRODUCTS --> WC_HANDLER
+    CATEGORIES --> WC_HANDLER
+    PAGE_HANDLER --> MEDIA_HANDLER
+    WC_HANDLER --> MEDIA_HANDLER
+    PAGE_HANDLER --> SEO_HANDLER
+    WC_HANDLER --> SEO_HANDLER
+  end
+
+  subgraph WORDPRESS["WordPress Domain"]
+    USERS[("Users / Authors")]
+    CONTENT[("Posts / Pages / Taxonomies")]
+    WOO[("WooCommerce Products / Categories")]
+    MEDIA[("Media Library")]
+    POSTMETA[("Post Metadata")]
+    AUTHOR_HANDLER --> USERS
+    PAGE_HANDLER --> CONTENT
+    WC_HANDLER --> WOO
+    MEDIA_HANDLER --> MEDIA
+    SEO_HANDLER --> POSTMETA
+  end
+
+  subgraph SEO["SEO Provider Compatibility"]
+    YOAST["Yoast SEO Fields"]
+    RANKMATH["Rank Math Fields"]
+    SEO_HANDLER --> YOAST
+    SEO_HANDLER --> RANKMATH
+  end
+
+  subgraph RECOVERY["REST Availability + Operations"]
+    OWN_NAMESPACE["Always Preserve JorgeCastro Namespace"]
+    BLOCKERS["Known Security / Optimization Blockers"]
+    FORCE["Admin-Controlled REST Recovery"]
+    LOG["Plugin Request Log"]
+    BLOCKERS --> FORCE --> OWN_NAMESPACE
+    OWN_NAMESPACE --> ROUTER
+    CONNECTION --> LOG --> ADMIN
+  end
+
+  USERS --> RESPONSE["Structured JSON Response"]
+  CONTENT --> RESPONSE
+  WOO --> RESPONSE
+  POSTMETA --> RESPONSE
+  RESPONSE --> SAAS
+

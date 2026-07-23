@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getBlogPost } from "@/lib/data";
+import { getBlogPost, getSiteSettings } from "@/lib/data";
 import BlogPostClient from "./BlogPostClient";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = await getBlogPost(slug);
+  const [post, settings] = await Promise.all([getBlogPost(slug), getSiteSettings()]);
 
   if (!post) {
     notFound();
@@ -60,6 +60,7 @@ export default async function BlogPostPage({ params }: Props) {
         featured: post.featured,
         author: { name: post.author },
       }}
+      settings={settings}
     />
   );
 }

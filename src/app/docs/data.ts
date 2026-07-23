@@ -133,7 +133,7 @@ const data = await res.json();`,
           "List published blog posts with pagination. Optionally filter by tag or category.",
         queryParams: [
           { name: "page", type: "number", default: "1", description: "Page number (min 1)" },
-          { name: "limit", type: "number", default: "10", description: "Posts per page (1–50)" },
+          { name: "limit", type: "number", default: "10", description: "Posts per page (1-50)" },
           { name: "tag", type: "string", description: "Filter posts containing this tag" },
           { name: "category", type: "string", description: "Filter by exact category match" },
         ],
@@ -646,7 +646,7 @@ const data = await res.json();`,
         bodyFields: [
           { name: "name", type: "string", required: true, description: "Skill name" },
           { name: "category", type: "string", required: true, description: "Skill category" },
-          { name: "proficiency", type: "number", required: true, description: "Proficiency level (0–100)" },
+          { name: "proficiency", type: "number", required: true, description: "Proficiency level (0-100)" },
           { name: "sortOrder", type: "number", default: "0", description: "Display order" },
         ],
         bodyExample: `{
@@ -688,7 +688,7 @@ const data = await res.json();`,
         bodyFields: [
           { name: "name", type: "string", description: "Skill name" },
           { name: "category", type: "string", description: "Skill category" },
-          { name: "proficiency", type: "number", description: "Proficiency level (0–100)" },
+          { name: "proficiency", type: "number", description: "Proficiency level (0-100)" },
           { name: "sortOrder", type: "number", description: "Display order" },
         ],
         bodyExample: `{

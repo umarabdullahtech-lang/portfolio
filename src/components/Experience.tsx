@@ -1,9 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useInView } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Briefcase, GraduationCap, Calendar } from "lucide-react";
+import { Briefcase, Calendar, GraduationCap, MapPin } from "lucide-react";
 
 type ExperienceData = {
   id: string;
@@ -22,91 +21,89 @@ type Props = { experiences: ExperienceData[] };
 export default function Experience({ experiences }: Props) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
+  const careerSummary = "10 years in software engineering. 5 years specializing in AI engineering.";
 
   return (
-    <section id="experience" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute bottom-0 left-1/4 w-[500px] h-[400px] rounded-full bg-violet-600/5 blur-[100px]" />
-      </div>
-
-      <div className="max-w-4xl mx-auto relative">
-        <motion.div
+    <section id="experience" ref={ref} className="relative overflow-hidden border-t-[3px] border-black bg-[var(--paper-deep)] px-5 py-28 sm:px-8 md:py-40 lg:px-10">
+      <div className="pointer-events-none absolute inset-0 opacity-50 blueprint-grid" aria-hidden="true" />
+      <div className="relative mx-auto max-w-7xl">
+        <motion.header
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
-          className="text-center mb-16"
+          className="mb-20 grid gap-9 lg:grid-cols-[0.8fr_0.4fr] lg:items-end"
         >
-          <p className="text-indigo-400 text-sm font-semibold uppercase tracking-widest mb-3">
-            Experience
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            My <span className="gradient-text">Journey</span>
-          </h2>
-          <p className="text-slate-400 max-w-xl mx-auto">
-            5+ years of building, shipping, and iterating on products that users love.
-          </p>
-        </motion.div>
+          <div>
+            <span className="kicker mb-6">career.log --selected</span>
+            <h2 className="section-heading text-black">
+              My <span className="text-[var(--signal)]">Journey</span>
+            </h2>
+          </div>
+          <div className="border-[3px] border-black bg-[var(--paper)] p-5 shadow-[6px_6px_0_#0a0a0a]">
+            <p className="font-mono text-[10px] font-black uppercase tracking-[0.1em] text-[var(--signal-dark)]">career summary</p>
+            <p data-scrub-text className="mt-3 text-xl font-black uppercase leading-tight tracking-[-0.035em] text-black">
+              {careerSummary.split(" ").map((word, index) => (
+                <span key={`${word}-${index}`} className="inline-block">
+                  {word}{index < careerSummary.split(" ").length - 1 ? "\u00A0" : ""}
+                </span>
+              ))}
+            </p>
+          </div>
+        </motion.header>
 
-        <div className="relative">
-          <div className="absolute left-4 sm:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-indigo-500/40 via-violet-500/20 to-transparent" />
-
-          <div className="space-y-8">
-            {experiences.map((item, i) => {
-              const isLeft = i % 2 === 0;
-              const descLines = item.description.split('\n').filter(Boolean);
+        <div className="relative mx-auto max-w-5xl">
+          <div className="pointer-events-none absolute bottom-0 left-5 top-0 w-[3px] bg-black md:left-1/2" aria-hidden="true" />
+          <div className="space-y-16 md:space-y-24">
+            {experiences.map((item, index) => {
+              const isLeft = index % 2 === 0;
+              const Icon = item.type === "education" ? GraduationCap : Briefcase;
+              const descLines = item.description.split("\n").filter(Boolean);
 
               return (
-                <motion.div
+                <motion.article
                   key={item.id}
-                  initial={{ opacity: 0, x: isLeft ? -40 : 40 }}
+                  initial={{ opacity: 0, x: isLeft ? -32 : 32 }}
                   animate={inView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ delay: i * 0.15, duration: 0.6 }}
-                  className={`relative flex items-start gap-6 sm:gap-0 ${
-                    isLeft ? "sm:flex-row" : "sm:flex-row-reverse"
-                  }`}
+                  transition={{ delay: index * 0.12, duration: 0.55 }}
+                  className={`relative grid md:grid-cols-2 ${isLeft ? "" : "md:[&>*:last-child]:col-start-2"}`}
+                  data-stack-card
                 >
-                  <div className="absolute left-4 sm:left-1/2 top-6 w-3 h-3 rounded-full bg-indigo-500 border-2 border-indigo-300 shadow-lg shadow-indigo-500/50 -translate-x-1/2 z-10" />
-                  <div className="hidden sm:block sm:w-1/2" />
+                  <span className="absolute left-5 top-8 z-10 h-5 w-5 -translate-x-[8px] border-[3px] border-black bg-[var(--signal)] md:left-1/2" aria-hidden="true" />
 
-                  <div className={`ml-10 sm:ml-0 sm:w-1/2 ${isLeft ? "sm:pr-10" : "sm:pl-10"}`}>
-                    <motion.div
-                      className="glass rounded-2xl p-6 border border-white/5 hover:border-indigo-500/30 transition-all duration-300"
-                      whileHover={{ y: -2 }}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            {item.type === "education" ? (
-                              <GraduationCap size={14} className="text-violet-400" />
-                            ) : (
-                              <Briefcase size={14} className="text-indigo-400" />
-                            )}
-                            <h3 className="text-white font-bold text-base">{item.role}</h3>
-                          </div>
-                          <p className="text-indigo-300 text-sm font-medium">{item.company}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 text-slate-500 text-xs justify-end">
-                            <Calendar size={11} />
-                            {item.period}
-                          </div>
-                          {item.location && (
-                            <p className="text-slate-600 text-xs mt-0.5">{item.location}</p>
-                          )}
-                        </div>
+                  <div className={`ml-12 md:ml-0 ${isLeft ? "md:pr-12" : "md:col-start-2 md:pl-12"}`}>
+                    <div className="brutal-card hard-press overflow-hidden bg-[var(--paper)]">
+                      <div className="terminal-bar">
+                        <span>entry_{String(index + 1).padStart(2, "0")}.json</span>
+                        <span>{item.current ? "active" : "archived"}</span>
                       </div>
+                      <div className="p-6 sm:p-7">
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center border-[3px] border-black bg-black text-[var(--paper)]">
+                            <Icon size={19} strokeWidth={2.6} />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-black uppercase leading-tight tracking-[-0.04em] text-black">{item.role}</h3>
+                            <p className="mt-1 font-mono text-xs font-black uppercase tracking-wide text-[var(--signal-dark)]">{item.company}</p>
+                          </div>
+                        </div>
 
-                      <ul className="space-y-1.5 mb-4">
-                        {descLines.map((d) => (
-                          <li key={d} className="flex items-start gap-2 text-slate-400 text-xs leading-relaxed">
-                            <span className="w-1 h-1 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
-                            {d}
-                          </li>
-                        ))}
-                      </ul>
-                    </motion.div>
+                        <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-y-2 border-black py-3 font-mono text-[9px] font-black uppercase tracking-wider text-black">
+                          <span className="flex items-center gap-2"><Calendar size={13} /> {item.period}</span>
+                          {item.location && <span className="flex items-center gap-2"><MapPin size={13} /> {item.location}</span>}
+                        </div>
+
+                        <ul className="mt-5 space-y-3">
+                          {descLines.map((line) => (
+                            <li key={line} className="flex items-start gap-3 text-sm font-medium leading-relaxed text-[#34322d]">
+                              <span className="mt-2 h-2 w-2 shrink-0 bg-[var(--signal)] outline outline-2 outline-black" />
+                              {line}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                </motion.div>
+                </motion.article>
               );
             })}
           </div>

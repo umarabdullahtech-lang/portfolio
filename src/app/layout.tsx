@@ -1,17 +1,30 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Instrument_Sans, JetBrains_Mono, Outfit } from "next/font/google";
+import MotionProvider from "@/components/MotionProvider";
 import "./globals.css";
 
-const inter = Inter({
+const display = Outfit({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-display",
+  display: "swap",
+});
+
+const body = Instrument_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Umar Abdullah | Senior Software & AI Engineer",
   description:
-    "Senior Software Engineer & AI Engineer specializing in AI-powered automation systems and SaaS platforms. Expert in Node.js, Next.js, React, Python, LangChain, and modern AI/ML technologies.",
+    "Software engineer with 10 years of experience and 5 years specializing in AI engineering, building AI-powered automation systems and scalable SaaS platforms.",
   keywords: [
     "Umar Abdullah",
     "Senior Software Engineer",
@@ -32,14 +45,14 @@ export const metadata: Metadata = {
     locale: "en_US",
     title: "Umar Abdullah | Senior Software & AI Engineer",
     description:
-      "Senior Software Engineer & AI Engineer specializing in AI-powered automation systems and SaaS platforms.",
+      "10 years in software engineering, including 5 years specializing in production AI systems and scalable SaaS platforms.",
     siteName: "Umar Abdullah Portfolio",
   },
   twitter: {
     card: "summary_large_image",
     title: "Umar Abdullah | Senior Software & AI Engineer",
     description:
-      "Senior Software Engineer & AI Engineer specializing in AI-powered automation systems and SaaS platforms.",
+      "10 years in software engineering, including 5 years specializing in production AI systems and scalable SaaS platforms.",
   },
   robots: {
     index: true,
@@ -53,9 +66,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.variable} antialiased bg-[#0a0a0f] text-slate-200`}>
-        {children}
+    <html lang="en" data-scroll-behavior="smooth">
+      <body className={`${display.variable} ${body.variable} ${mono.variable} antialiased`}>
+        <a className="skip-link" href="#main-content">
+          Skip to content
+        </a>
+        <MotionProvider>{children}</MotionProvider>
       </body>
     </html>
   );

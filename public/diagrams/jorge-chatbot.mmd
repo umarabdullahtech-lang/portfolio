@@ -1,0 +1,87 @@
+flowchart LR
+  OWNER["Workspace Owner"] --> CONSOLE["Next.js Management Console"]
+  VISITOR["Website Visitor"] --> CHANNELS
+
+  subgraph CONTROL["Tenant Control Plane"]
+    CONSOLE
+    AUTH["NextAuth + JWT Identity"]
+    BOT["Bot Definition + Access Rules"]
+    PROMPT["Prompt + Model Settings"]
+    APPEARANCE["Brand + Widget Appearance"]
+    BILLING["Stripe Plans + Usage"]
+    CONSOLE --> AUTH
+    CONSOLE --> BOT
+    CONSOLE --> PROMPT
+    CONSOLE --> APPEARANCE
+    CONSOLE --> BILLING
+  end
+
+  subgraph INGEST["Knowledge Ingestion Plane"]
+    SOURCES["PDF / DOCX / Text / Web / Sitemap / YouTube / Audio"]
+    EXTRACT["Format-Specific Extractors"]
+    OBJECTS["S3 / Google Cloud Objects"]
+    CHUNK["Clean + Chunk + Metadata"]
+    EMBED["Embedding Service"]
+    VECTOR[("Pinecone Vector Index")]
+    CONSOLE --> SOURCES --> EXTRACT
+    EXTRACT --> OBJECTS
+    EXTRACT --> CHUNK --> EMBED --> VECTOR
+  end
+
+  subgraph CHANNELS["Delivery Channels"]
+    HOSTED["Hosted Chat Experience"]
+    BUBBLE["Embeddable Website Bubble"]
+    API_CLIENT["Generic Chat API"]
+  end
+
+  subgraph CHAT["Conversation API"]
+    API["Express Main API"]
+    SESSION["Conversation + Tenant Context"]
+    ANALYZE["Question Analysis"]
+    ROUTE["Retrieve / Direct / No-Data Decision"]
+    RETRIEVE["Tenant-Scoped Semantic Retrieval"]
+    GRADE["Document Relevance Grading"]
+    GENERATE["Grounded Response Generation"]
+    CHANNELS --> API --> SESSION --> ANALYZE --> ROUTE
+    ROUTE --> RETRIEVE --> GRADE
+    GRADE -->|"relevant"| GENERATE
+    GRADE -->|"insufficient"| ROUTE
+    ROUTE -->|"direct"| GENERATE
+    VECTOR --> RETRIEVE
+    PROMPT --> GENERATE
+  end
+
+  subgraph MODELS["Model Providers"]
+    OPENAI["OpenAI"]
+    GEMINI["Google Gemini"]
+    ANTHROPIC["Anthropic"]
+    GENERATE --> OPENAI
+    GENERATE --> GEMINI
+    GENERATE --> ANTHROPIC
+  end
+
+  subgraph OPERATIONS["Operational Feedback"]
+    MYSQL[("MySQL")]
+    HISTORY["Conversation History"]
+    REVIEW["Likes / Reviews / QA Refinement"]
+    LEADS["Lead Capture + Inbox"]
+    LOGS["Winston Logs + API Documentation"]
+    GENERATE --> HISTORY --> MYSQL
+    CHANNELS --> LEADS --> MYSQL
+    OWNER --> REVIEW --> MYSQL
+    REVIEW -.->|"improve policy"| PROMPT
+    API --> LOGS
+  end
+
+  GENERATE --> CHANNELS --> VISITOR
+  BOT --> API
+  APPEARANCE --> BUBBLE
+
+  subgraph RUNTIME["Production Runtime"]
+    NGINX["nginx Reverse Proxy"]
+    DOCKER["Docker Compose"]
+    DOCKER -.->|"client"| CONSOLE
+    DOCKER -.->|"main API"| API
+    DOCKER -.->|"ingestion service"| EXTRACT
+    NGINX -.->|"routes"| CHANNELS
+  end

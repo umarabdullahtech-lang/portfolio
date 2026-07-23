@@ -1,0 +1,65 @@
+flowchart LR
+  OPERATOR["Home-Lab / Infrastructure Operator"] --> CONFIG["Declarative YAML Configuration"]
+
+  subgraph DECLARE["Dashboard Definition"]
+    SERVICES["Service Groups + Endpoints"]
+    BOOKMARKS["Bookmarks"]
+    WIDGETS["Information + Service Widgets"]
+    LAYOUT["Layout / Theme / Localization"]
+    CONFIG --> SERVICES
+    CONFIG --> BOOKMARKS
+    CONFIG --> WIDGETS
+    CONFIG --> LAYOUT
+  end
+
+  subgraph DISCOVERY["Optional Service Discovery"]
+    DOCKER_SOCKET["Docker Socket / Proxy"]
+    LABELS["Container Labels"]
+    DISCOVER["Service Discovery Adapter"]
+    DOCKER_SOCKET --> DISCOVER
+    LABELS --> DISCOVER
+    DISCOVER --> SERVICES
+  end
+
+  subgraph APP["Next.js Application"]
+    LOAD["Configuration Loader + Validation"]
+    RENDER["Server + Client Component Rendering"]
+    SEARCH["Search + Navigation"]
+    I18N["i18next Localization"]
+    SERVICES --> LOAD
+    BOOKMARKS --> LOAD
+    WIDGETS --> LOAD
+    LAYOUT --> LOAD
+    LOAD --> RENDER
+    I18N --> RENDER
+    RENDER --> SEARCH
+  end
+
+  subgraph INTEGRATIONS["Protected Integration Boundary"]
+    PROXY["Server-Side API Proxy"]
+    ADAPTERS["Service-Specific Adapters"]
+    SECRETS["Environment + Config Secrets"]
+    EXTERNAL["External Service APIs"]
+    RENDER --> PROXY
+    SECRETS --> PROXY
+    PROXY --> ADAPTERS --> EXTERNAL
+    EXTERNAL --> ADAPTERS --> RENDER
+  end
+
+  subgraph RESILIENCE["Widget Isolation"]
+    TIMEOUT["Timeout + Error Handling"]
+    STATUS["Normalized Status / Metrics"]
+    ADAPTERS --> TIMEOUT --> STATUS --> RENDER
+  end
+
+  subgraph DELIVERY["Deployment"]
+    IMAGE["Docker Image"]
+    VOLUMES["Configuration Volumes"]
+    STATIC["Static Assets"]
+    VOLUMES --> IMAGE
+    STATIC --> IMAGE
+    IMAGE --> APP
+  end
+
+  RENDER --> DASHBOARD["Responsive Service Dashboard"] --> OPERATOR
+

@@ -164,7 +164,7 @@ function ParamsTable({ params }: { params: Param[] }) {
                 )}
               </td>
               <td className="py-2 text-violet-400">{p.type}</td>
-              <td className="py-2 text-slate-500">{p.default ?? "—"}</td>
+              <td className="py-2 text-slate-500">{p.default ?? "None"}</td>
               <td className="py-2 text-slate-400">{p.description}</td>
             </tr>
           ))}

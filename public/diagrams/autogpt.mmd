@@ -1,0 +1,72 @@
+flowchart LR
+  AUTHOR["Agent Author"] --> BUILDER["Next.js Visual Graph Builder"]
+
+  subgraph AUTHORING["Agent Authoring Plane"]
+    GRAPH["React Flow Agent Graph"]
+    BLOCKS["Typed Block Registry"]
+    CONFIG["Inputs / Outputs / Credentials / Settings"]
+    VERSION["Versioned Agent Definition"]
+    BUILDER --> GRAPH
+    BLOCKS --> GRAPH
+    GRAPH --> CONFIG --> VERSION
+  end
+
+  subgraph CONTROL["Platform Control Plane"]
+    API["FastAPI Platform API"]
+    AUTH["Identity + Workspace"]
+    SECRETS["Credential + Secret Boundary"]
+    SCHEDULE["Schedules + Triggers"]
+    VERSION --> API
+    API --> AUTH
+    API --> SECRETS
+    API --> SCHEDULE
+  end
+
+  subgraph EXECUTION["Agent Execution Plane"]
+    DISPATCH["Execution Dispatcher"]
+    RESOLVE["Dependency + Block Resolution"]
+    WORKER["Isolated Agent Worker"]
+    MODEL["Model Blocks"]
+    TOOLS["Tool + Integration Blocks"]
+    DATA["Data Transformation Blocks"]
+    EVENTS["Progress / Output / Failure Events"]
+    API --> DISPATCH --> RESOLVE --> WORKER
+    WORKER --> MODEL
+    WORKER --> TOOLS
+    WORKER --> DATA
+    MODEL --> EVENTS
+    TOOLS --> EVENTS
+    DATA --> EVENTS
+  end
+
+  subgraph STATE["Durable + Transient State"]
+    POSTGRES[("PostgreSQL")]
+    PRISMA["Prisma Data Layer"]
+    REDIS[("Redis")]
+    SUPABASE["Supabase Services"]
+    API --> PRISMA --> POSTGRES
+    WORKER <--> REDIS
+    AUTH --> SUPABASE
+    EVENTS --> POSTGRES
+  end
+
+  subgraph EXPERIENCE["Run + Distribution Experience"]
+    STREAM["Live Execution State"]
+    RESULTS["Node Outputs + Run History"]
+    MARKET["Agent Marketplace"]
+    EVENTS --> STREAM --> BUILDER
+    POSTGRES --> RESULTS --> BUILDER
+    VERSION --> MARKET
+    MARKET --> AUTHOR
+  end
+
+  subgraph OPS["Local + Hosted Operations"]
+    COMPOSE["Docker Compose"]
+    FRONTEND["Frontend Runtime"]
+    BACKEND["API Runtime"]
+    EXECUTOR["Executor Runtime"]
+    COMPOSE -.-> FRONTEND
+    COMPOSE -.-> BACKEND
+    COMPOSE -.-> EXECUTOR
+  end
+

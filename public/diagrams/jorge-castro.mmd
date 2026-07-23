@@ -1,0 +1,101 @@
+flowchart LR
+  USER["Brand / Agency / Operator"] --> SURFACES
+
+  subgraph SURFACES["Product Surfaces"]
+    WEB["Next.js SaaS Console"]
+    TELESALES["Telesales Workspace"]
+    ADMIN["Admin + Operations"]
+    DESKTOP["Desktop Client"]
+  end
+
+  subgraph PLATFORM["Platform API"]
+    API["Express Application API"]
+    AUTH["Identity / Teams / Permissions"]
+    BILLING["Credits / Plans / Stripe"]
+    BRAND["Brand Context + Settings"]
+    SURFACES --> API
+    API --> AUTH
+    API --> BILLING
+    API --> BRAND
+  end
+
+  subgraph RESEARCH["Evidence Acquisition"]
+    AUDIT["Site Audit + Crawl"]
+    SERP["SERP + DataForSEO"]
+    TRENDS["Trends + Competitors"]
+    KEYWORDS["Keyword Universe"]
+    VISIBILITY["AI Visibility + Citation Checks"]
+    API --> AUDIT
+    API --> SERP
+    API --> TRENDS
+    AUDIT --> KEYWORDS
+    SERP --> KEYWORDS
+    KEYWORDS --> VISIBILITY
+  end
+
+  subgraph QUEUE["Durable Orchestration"]
+    BULL["Bull Job Queue"]
+    REDIS[("Redis")]
+    WORKERS["Background Workers"]
+    CRON["Scheduled Trackers + Reports"]
+    SOCKET["Socket.IO Progress"]
+    API --> BULL
+    BULL <--> REDIS
+    BULL --> WORKERS
+    CRON --> BULL
+    WORKERS --> SOCKET --> SURFACES
+  end
+
+  subgraph INTELLIGENCE["Provider-Neutral Intelligence"]
+    ROUTER["Model + Tool Router"]
+    OPENAI["OpenAI / Azure OpenAI"]
+    ANTHROPIC["Anthropic"]
+    GEMINI["Google Gemini"]
+    OSS["Compatible Open-Source Models"]
+    TOOLS["Search / Browser / Image / Cost Tools"]
+    WORKERS --> ROUTER
+    ROUTER --> OPENAI
+    ROUTER --> ANTHROPIC
+    ROUTER --> GEMINI
+    ROUTER --> OSS
+    ROUTER <--> TOOLS
+  end
+
+  subgraph CONTENT["Content + Optimization Workflows"]
+    STRATEGY["Audience + Topic Strategy"]
+    GENERATE["Single / Bulk Content Generation"]
+    IMAGE["Image Generation"]
+    LINKING["Internal Linking + Metadata"]
+    OPTIMIZE["LLM / AI Overview Optimization"]
+    BRAND --> STRATEGY
+    KEYWORDS --> STRATEGY
+    ROUTER --> GENERATE
+    STRATEGY --> GENERATE --> IMAGE
+    GENERATE --> LINKING --> OPTIMIZE
+  end
+
+  subgraph PUBLISH["Controlled Publishing Boundary"]
+    WP["JorgeCastro WordPress REST Bridge"]
+    COMMERCE["WooCommerce / Shopify Adapters"]
+    STORAGE["S3 + Google Cloud Storage"]
+    OPTIMIZE --> WP
+    OPTIMIZE --> COMMERCE
+    IMAGE --> STORAGE
+    STORAGE --> WP
+  end
+
+  subgraph STATE["State + Measurement"]
+    MYSQL[("MySQL")]
+    TRACKERS["Traditional + AI Rank Trackers"]
+    LOGS["Automation Logs + Job State"]
+    REPORTS["Weekly / Monthly PDF Reports"]
+    API <--> MYSQL
+    WORKERS --> LOGS --> MYSQL
+    VISIBILITY --> TRACKERS --> MYSQL
+    MYSQL --> REPORTS
+    REPORTS --> USER
+  end
+
+  WP --> TRACKERS
+  COMMERCE --> TRACKERS
+

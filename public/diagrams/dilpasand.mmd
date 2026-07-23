@@ -1,0 +1,74 @@
+flowchart LR
+  GUEST["Restaurant Guest"] --> WEB["Next.js Hospitality Experience"]
+
+  subgraph EXPERIENCE["Brand + Discovery"]
+    HERO["Cinematic Storytelling"]
+    MENU["Menu Discovery"]
+    STORY["Restaurant Story"]
+    GALLERY["Gallery + Media"]
+    LOCATION["Map + Find Us"]
+    SOCIAL["Reviews + Social Content"]
+    WEB --> HERO
+    WEB --> MENU
+    WEB --> STORY
+    WEB --> GALLERY
+    WEB --> LOCATION
+    WEB --> SOCIAL
+  end
+
+  subgraph CONVERSION["Visit + Event Intent"]
+    TABLE["Table Reservation"]
+    PRIVATE["Private Dining"]
+    GROUP["Group Booking"]
+    CATERING["Catering Inquiry"]
+    NEWSLETTER["Newsletter"]
+    MENU --> TABLE
+    WEB --> PRIVATE
+    PRIVATE --> GROUP
+    WEB --> CATERING
+    WEB --> NEWSLETTER
+  end
+
+  subgraph APP["Application API"]
+    EXPRESS["Express Service Layer"]
+    USER["Customer Identity"]
+    SUPPORT["Support + Inquiry Workflows"]
+    BLOG["Blog CRUD + Admin Publishing"]
+    PAYMENT["Payment Events"]
+    TABLE --> EXPRESS
+    GROUP --> EXPRESS
+    CATERING --> EXPRESS
+    NEWSLETTER --> EXPRESS
+    EXPRESS --> USER
+    EXPRESS --> SUPPORT
+    EXPRESS --> BLOG
+    EXPRESS --> PAYMENT
+  end
+
+  subgraph STATE["Data + Media"]
+    MYSQL[("MySQL")]
+    S3[("AWS S3")]
+    USER --> MYSQL
+    SUPPORT --> MYSQL
+    BLOG --> MYSQL
+    PAYMENT --> MYSQL
+    BLOG --> S3
+    S3 --> GALLERY
+  end
+
+  subgraph OPERATIONS["Operator + Runtime"]
+    ADMIN["Protected Admin Surfaces"]
+    EMAIL["Transactional Email"]
+    ANALYTICS["Google Analytics"]
+    DOCKER["Docker Compose"]
+    NGINX["nginx"]
+    ADMIN --> BLOG
+    ADMIN --> SUPPORT
+    SUPPORT --> EMAIL --> GUEST
+    WEB --> ANALYTICS
+    DOCKER -.-> WEB
+    DOCKER -.-> EXPRESS
+    NGINX -.-> WEB
+    NGINX -.-> EXPRESS
+  end
+

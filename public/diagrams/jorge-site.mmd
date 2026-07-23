@@ -1,0 +1,82 @@
+flowchart LR
+  VISITOR["Market-Specific Visitor"] --> LOCALE["Locale-Aware Next.js Routing"]
+
+  subgraph PUBLIC["Public Product Experience"]
+    NAV["Localized Navigation"]
+    VALUE["AI SEO Product Narrative"]
+    CAPABILITIES["Content / Visibility / Automation Education"]
+    MEDIA["Media + Product Demonstration"]
+    FAQ["FAQ + Trust Content"]
+    POLICY["Privacy + Consent"]
+    LOCALE --> NAV --> VALUE
+    VALUE --> CAPABILITIES
+    VALUE --> MEDIA
+    NAV --> FAQ
+    NAV --> POLICY
+  end
+
+  subgraph CONVERSION["Acquisition Journey"]
+    PRICING["Localized Pricing"]
+    REGISTER["Account Registration"]
+    LOGIN["Shared Platform Login"]
+    PLAN["Plan Selection"]
+    CAPABILITIES --> PRICING --> PLAN --> REGISTER
+    NAV --> LOGIN
+  end
+
+  subgraph CLIENT["Next.js Application"]
+    INTL["next-intl Messages"]
+    META["Localized Metadata + SEO"]
+    UI["React Product Components"]
+    LOCALE --> INTL --> UI
+    INTL --> META
+    UI --> PUBLIC
+    UI --> CONVERSION
+  end
+
+  subgraph API["Shared Platform Services"]
+    EXPRESS["Express API"]
+    AUTH["Identity + Session Handoff"]
+    BILLING["Stripe Subscription State"]
+    CONTENT["Dynamic Product Content"]
+    TRANSLATE["Translation Services"]
+    REGISTER --> EXPRESS
+    LOGIN --> EXPRESS
+    PLAN --> EXPRESS
+    EXPRESS --> AUTH
+    EXPRESS --> BILLING
+    EXPRESS --> CONTENT
+    EXPRESS --> TRANSLATE
+  end
+
+  subgraph STATE["Application State"]
+    MYSQL[("MySQL")]
+    REDIS[("Redis")]
+    AUTH --> MYSQL
+    BILLING --> MYSQL
+    CONTENT --> MYSQL
+    TRANSLATE <--> REDIS
+  end
+
+  subgraph MEASURE["Consent-Aware Measurement"]
+    CONSENT["Cookie Preference"]
+    ANALYTICS["Analytics"]
+    META_PIXEL["Meta Pixel"]
+    POLICY --> CONSENT
+    CONSENT --> ANALYTICS
+    CONSENT --> META_PIXEL
+  end
+
+  subgraph DELIVERY["Production Topology"]
+    DOCKER["Docker Compose"]
+    NGINX["nginx"]
+    CLIENT_IMAGE["Client Runtime"]
+    API_IMAGE["Server Runtime"]
+    DOCKER -.-> CLIENT_IMAGE
+    DOCKER -.-> API_IMAGE
+    NGINX --> CLIENT_IMAGE --> LOCALE
+    NGINX --> API_IMAGE --> EXPRESS
+  end
+
+  AUTH --> PRODUCT["Authenticated JorgeCastro SaaS"] --> VISITOR
+

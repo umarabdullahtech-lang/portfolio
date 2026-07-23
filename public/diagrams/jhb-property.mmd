@@ -1,0 +1,81 @@
+flowchart LR
+  USER["Investor / Underwriter"] --> WEB["Next.js Deal Console"]
+
+  subgraph INPUT["MLS Acquisition"]
+    MASTER["Historical Closed-Sale CSV"]
+    ACTIVE["Active Listing CSV"]
+    UPLOAD["Express Upload API"]
+    STREAM["Streaming CSV Parser"]
+    HASH["Content Hash + Idempotency"]
+    MASTER --> UPLOAD
+    ACTIVE --> UPLOAD
+    UPLOAD --> STREAM --> HASH
+  end
+
+  subgraph TRAIN["Historical Training Pipeline"]
+    NORMALIZE["Field + Address Normalization"]
+    IDENTITY["Property Identity Resolution"]
+    PAIRS["Historical Flip Pair Detection"]
+    CONTAMINATION["Contamination + Outlier Filters"]
+    MODELS["ZIP / County / Global Market Models"]
+    HASH --> NORMALIZE --> IDENTITY --> PAIRS --> CONTAMINATION --> MODELS
+  end
+
+  subgraph SCORE["Active Listing Evaluation"]
+    ACTIVE_NORMALIZE["Active Listing Normalization"]
+    COMPS["Geo + Class + Recency Comp Selection"]
+    ARV["ARV + Rehab-Sensitive Economics"]
+    E1["Engine 1: Fact / Truth Gates"]
+    E2["Engine 2: Market Model"]
+    E3["Engine 3: Deal Thresholds"]
+    DECISION["Pursue / Underwrite / Watch / Reject"]
+    HASH --> ACTIVE_NORMALIZE
+    MODELS --> COMPS
+    ACTIVE_NORMALIZE --> COMPS --> ARV
+    ARV --> E1 --> E2 --> E3 --> DECISION
+  end
+
+  subgraph AI["Controlled AI Enrichment"]
+    REMARKS["Listing Remarks Analysis"]
+    CONDITION["Condition Classification"]
+    REHAB["Rehab Range Estimation"]
+    NARRATIVE["Human-Readable Deal Narrative"]
+    CACHE["LLM Cache + Structured Schemas"]
+    ACTIVE_NORMALIZE --> REMARKS
+    REMARKS --> CONDITION --> REHAB --> NARRATIVE
+    CACHE <--> REMARKS
+    CACHE <--> NARRATIVE
+    NARRATIVE --> DECISION
+  end
+
+  subgraph DATA["Auditable State"]
+    MYSQL[("MySQL 8")]
+    RUNS["Pipeline Runs + Progress"]
+    CONFIG["Versioned Scorer Config"]
+    FEEDBACK["Verification + Reviewer Feedback"]
+    DECISION --> MYSQL
+    MODELS --> MYSQL
+    HASH --> RUNS --> MYSQL
+    CONFIG --> E1
+    CONFIG --> E3
+    FEEDBACK --> MYSQL
+    FEEDBACK -.->|"retrain"| MODELS
+  end
+
+  subgraph DELIVERY["Operations + Delivery"]
+    SEARCH["Search / Maps / Saved Views"]
+    WATCH["Watchlists"]
+    SHEETS["Google Sheets Export"]
+    SSE["Server-Sent Run Progress"]
+    DOCKER["Docker + nginx Runtime"]
+    MYSQL --> SEARCH --> WEB
+    MYSQL --> WATCH --> WEB
+    DECISION --> SHEETS
+    RUNS --> SSE --> WEB
+    DOCKER -.->|"runs"| WEB
+    DOCKER -.->|"runs"| UPLOAD
+  end
+
+  WEB --> UPLOAD
+  WEB --> SEARCH
+  WEB --> FEEDBACK

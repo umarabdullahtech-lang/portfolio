@@ -1,0 +1,77 @@
+flowchart LR
+  TRAVELER["Pilgrim / Traveler"] --> EXPERIENCE["Next.js Responsive Experience"]
+
+  subgraph DISCOVERY["Travel Discovery"]
+    MODES["Umrah Only / Holiday / Hotels / Flight + Hotel"]
+    ORIGIN["Origin + Destination"]
+    DATES["Departure / Return / Nights"]
+    PARTY["Travelers / Rooms / Cabin"]
+    CURRENCY["Currency Context"]
+    EXPERIENCE --> MODES
+    MODES --> ORIGIN --> DATES --> PARTY --> CURRENCY
+  end
+
+  subgraph CONTENT["Merchandising + Guidance"]
+    PACKAGES["Umrah Package Catalog"]
+    DESTINATIONS["Destination + Holiday Discovery"]
+    GUIDE["Travel Guide + FAQ"]
+    BLOG["Editorial Blog"]
+    TESTIMONIALS["Testimonials + Partners"]
+    EXPERIENCE --> PACKAGES
+    EXPERIENCE --> DESTINATIONS
+    EXPERIENCE --> GUIDE
+    EXPERIENCE --> BLOG
+    EXPERIENCE --> TESTIMONIALS
+  end
+
+  subgraph BOOKING["Conversion Paths"]
+    INTENT["Structured Booking Intent"]
+    POPUP["Package / Holiday Booking Flow"]
+    CONTACT["Contact + Support"]
+    WHATSAPP["WhatsApp Assistance"]
+    CURRENCY --> INTENT --> POPUP
+    PACKAGES --> POPUP
+    EXPERIENCE --> CONTACT
+    EXPERIENCE --> WHATSAPP
+  end
+
+  subgraph API["Application Services"]
+    EXPRESS["Express API"]
+    USERS["Accounts / Login / Verification / Recovery"]
+    SUPPORT["Support Records"]
+    BLOG_API["Blog CRUD + Admin Publishing"]
+    PAYMENT["Stripe Payment + Webhook Handling"]
+    POPUP --> EXPRESS
+    CONTACT --> EXPRESS
+    EXPRESS --> USERS
+    EXPRESS --> SUPPORT
+    EXPRESS --> BLOG_API
+    EXPRESS --> PAYMENT
+  end
+
+  subgraph DATA["Persistence + Assets"]
+    MYSQL[("MySQL")]
+    S3[("AWS S3 Media")]
+    USERS --> MYSQL
+    SUPPORT --> MYSQL
+    BLOG_API --> MYSQL
+    PAYMENT --> MYSQL
+    BLOG_API --> S3
+    S3 --> BLOG
+  end
+
+  subgraph DELIVERY["Production Delivery"]
+    CLIENT["Next.js Client Container"]
+    SERVER["Express Server Container"]
+    NGINX["nginx Routing"]
+    DOCKER["Docker Compose"]
+    DOCKER -.-> CLIENT
+    DOCKER -.-> SERVER
+    NGINX --> CLIENT
+    NGINX --> SERVER
+    CLIENT --> EXPERIENCE
+    SERVER --> EXPRESS
+  end
+
+  MYSQL --> CONFIRMATION["Booking / Support Outcome"] --> TRAVELER
+

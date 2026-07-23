@@ -1,9 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useInView } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { ExternalLink, Bot, Globe, Zap, Database, ArrowRight } from "lucide-react";
+import { ArrowUpRight, Bot, Database, ExternalLink, Globe, Zap } from "lucide-react";
 import { GithubIcon } from "@/components/SocialIcons";
 
 type ProjectData = {
@@ -19,147 +18,118 @@ type ProjectData = {
 
 type Props = { projects: ProjectData[] };
 
-const iconMap: Record<number, React.ElementType> = {
-  0: Bot,
-  1: Globe,
-  2: Zap,
-  3: Database,
-};
-
-const colors = ["indigo", "violet", "cyan", "emerald"];
-
-const colorBorder: Record<string, string> = {
-  indigo: "border-indigo-500/30 hover:border-indigo-500/60",
-  violet: "border-violet-500/30 hover:border-violet-500/60",
-  cyan: "border-cyan-500/30 hover:border-cyan-500/60",
-  emerald: "border-emerald-500/30 hover:border-emerald-500/60",
-};
-const colorIcon: Record<string, string> = {
-  indigo: "bg-indigo-500/10 border-indigo-500/20 text-indigo-400",
-  violet: "bg-violet-500/10 border-violet-500/20 text-violet-400",
-  cyan: "bg-cyan-500/10 border-cyan-500/20 text-cyan-400",
-  emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
-};
-const colorTag: Record<string, string> = {
-  indigo: "bg-indigo-500/10 text-indigo-300 border-indigo-500/20",
-  violet: "bg-violet-500/10 text-violet-300 border-violet-500/20",
-  cyan: "bg-cyan-500/10 text-cyan-300 border-cyan-500/20",
-  emerald: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
-};
+const icons = [Bot, Globe, Zap, Database];
 
 export default function Projects({ projects }: Props) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [active, setActive] = useState(projects[0]?.id ?? null);
 
   return (
-    <section id="projects" ref={ref} className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full bg-indigo-600/5 blur-[120px]" />
-      </div>
-
-      <div className="max-w-6xl mx-auto relative">
-        <motion.div
+    <section id="projects" ref={ref} className="relative overflow-hidden border-t-[3px] border-black px-5 py-28 sm:px-8 md:py-40 lg:px-10">
+      <div className="register-mark left-6 top-10" aria-hidden="true" />
+      <div className="mx-auto max-w-7xl">
+        <motion.header
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
-          className="text-center mb-16"
+          className="mb-16 grid gap-8 lg:grid-cols-[0.75fr_0.45fr] lg:items-end"
         >
-          <p className="text-indigo-400 text-sm font-semibold uppercase tracking-widest mb-3">
-            Projects
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Things I&apos;ve <span className="gradient-text">Built</span>
-          </h2>
-          <p className="text-slate-400 max-w-xl mx-auto">
+          <div>
+            <span className="kicker mb-6">work.query --featured</span>
+            <h2 className="section-heading text-black">
+              Things I&apos;ve <span className="text-[var(--signal)]">Built</span>
+            </h2>
+          </div>
+          <p className="border-l-[6px] border-[var(--signal)] pl-5 text-lg font-semibold leading-relaxed text-[#34322d]">
             A selection of projects that showcase my expertise in AI engineering and full-stack development.
           </p>
-        </motion.div>
+        </motion.header>
 
-        <div className="grid sm:grid-cols-2 gap-6">
-          {projects.map((project, i) => {
-            const color = colors[i % colors.length];
-            const Icon = iconMap[i % 4];
-            const desc = project.description;
-            const shortDesc = desc.length > 120 ? desc.slice(0, 120) + "..." : desc;
-            const isExpanded = expanded === project.id;
+        <div className="flex flex-col gap-5 lg:h-[610px] lg:flex-row lg:items-stretch">
+          {projects.map((project, index) => {
+            const Icon = icons[index % icons.length];
+            const isActive = active === project.id;
 
             return (
-              <motion.div
+              <motion.article
                 key={project.id}
-                initial={{ opacity: 0, y: 40 }}
+                tabIndex={0}
+                initial={{ opacity: 0, y: 35 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: i * 0.1, duration: 0.6 }}
-                className={`glass rounded-2xl p-6 border ${colorBorder[color]} transition-all duration-300 flex flex-col`}
-                whileHover={{ y: -4 }}
+                transition={{ delay: index * 0.08, duration: 0.5 }}
+                onMouseEnter={() => setActive(project.id)}
+                onFocus={() => setActive(project.id)}
+                onClick={() => setActive(project.id)}
+                className={`relative flex min-h-[420px] flex-col overflow-hidden border-[3px] border-black p-5 shadow-[8px_8px_0_#0a0a0a] transition-[flex,background-color] duration-500 sm:p-6 lg:min-h-0 ${
+                  isActive ? "bg-[var(--signal)] lg:flex-[2.25]" : "bg-[var(--paper)] lg:flex-1"
+                }`}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-11 h-11 rounded-xl border flex items-center justify-center ${colorIcon[color]}`}>
-                    <Icon size={20} />
+                <div className="flex items-start justify-between gap-5 border-b-[3px] border-black pb-5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center border-[3px] border-black bg-black text-[var(--paper)]">
+                    <Icon size={21} strokeWidth={2.7} />
                   </div>
-                  {project.featured && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-medium">
-                      Featured
-                    </span>
-                  )}
+                  <div className="text-right font-mono">
+                    <span className="block text-4xl font-black leading-none text-black">{String(index + 1).padStart(2, "0")}</span>
+                    {project.featured && <span className="mt-2 block text-[9px] font-black uppercase tracking-wider text-black">featured.build</span>}
+                  </div>
                 </div>
 
-                <h3 className="text-white font-bold text-lg mb-2">{project.title}</h3>
+                <h3 className="mt-6 text-[clamp(1.65rem,2.6vw,3.25rem)] font-black uppercase leading-[0.92] tracking-[-0.055em] text-black">
+                  {project.title}
+                </h3>
 
-                <p className="text-slate-400 text-sm leading-relaxed mb-4 flex-1">
-                  {isExpanded ? desc : shortDesc}
-                </p>
+                <div
+                  className={`mt-6 flex flex-1 flex-col transition-opacity duration-300 ${
+                    isActive ? "opacity-100" : "lg:opacity-65"
+                  }`}
+                >
+                  <p className="max-w-2xl text-sm font-semibold leading-relaxed text-[#282621] sm:text-base">{project.description}</p>
 
-                {desc.length > 120 && (
-                  <button
-                    onClick={() => setExpanded(isExpanded ? null : project.id)}
-                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 mb-4 transition-colors cursor-pointer"
-                  >
-                    {isExpanded ? "Show less" : "Read more"}
-                    <ArrowRight size={12} className={`transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-                  </button>
-                )}
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    {project.techStack.map((tech) => (
+                      <span key={tech} className="border-2 border-black bg-[var(--paper)] px-2.5 py-1.5 font-mono text-[9px] font-black uppercase tracking-wide text-black">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
 
-                <div className="flex flex-wrap gap-1.5 mb-5">
-                  {project.techStack.map((tag) => (
-                    <span key={tag} className={`text-xs px-2 py-0.5 rounded-full border ${colorTag[color]}`}>
-                      {tag}
-                    </span>
-                  ))}
+                  <div className="mt-auto flex flex-wrap items-center gap-3 pt-7">
+                    {project.githubUrl && project.githubUrl !== "#" && (
+                      <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="hard-button hard-button--dark min-h-0 px-4 py-3">
+                        <GithubIcon size={14} /> Code
+                      </a>
+                    )}
+                    {project.liveUrl && project.liveUrl !== "#" && (
+                      <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="hard-button min-h-0 px-4 py-3">
+                        <ExternalLink size={14} /> Live demo
+                      </a>
+                    )}
+                    {!project.githubUrl && !project.liveUrl && (
+                      <span className="font-mono text-[9px] font-black uppercase tracking-[0.08em] text-black">case study / private system</span>
+                    )}
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-3 mt-auto">
-                  {project.githubUrl && project.githubUrl !== "#" && (
-                    <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
-                      <GithubIcon size={14} /> Code
-                    </a>
-                  )}
-                  {project.liveUrl && project.liveUrl !== "#" && (
-                    <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
-                      <ExternalLink size={14} /> Live Demo
-                    </a>
-                  )}
-                </div>
-              </motion.div>
+              </motion.article>
             );
           })}
         </div>
 
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.6 }}
-          className="text-center mt-12"
+          initial={{ opacity: 0, y: 15 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.45, duration: 0.45 }}
+          className="mt-14 flex justify-end"
         >
           <a
             href="https://github.com/umarabdullahtech"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 glass border border-white/10 hover:border-indigo-500/40 text-slate-300 hover:text-white rounded-xl text-sm font-medium transition-all duration-200"
+            className="hard-button hard-button--dark px-6 py-4"
           >
             <GithubIcon size={16} />
-            View All Projects on GitHub
-            <ExternalLink size={14} />
+            View all projects on GitHub
+            <ArrowUpRight size={16} strokeWidth={3} />
           </a>
         </motion.div>
       </div>
