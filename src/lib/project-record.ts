@@ -1,7 +1,7 @@
-import type { Project } from "@/generated/prisma/client";
+import type { Prisma, Project } from "@/generated/prisma/client";
 import type { PortfolioProject } from "@/data/projects";
 
-type ProjectWrite = Omit<Project, "id" | "createdAt" | "updatedAt">;
+type ProjectWrite = Omit<Prisma.ProjectUncheckedCreateInput, "id" | "createdAt" | "updatedAt">;
 
 const DEFAULT_IMAGE = "/projects/project-system.svg";
 
@@ -80,6 +80,36 @@ export function normalizeProjectInput(input: unknown): ProjectWrite {
 
   const liveUrl = nullableText(record.liveUrl);
   const image = nullableText(record.image) || DEFAULT_IMAGE;
+  const techStack = textList(record.techStack);
+  const capabilities = textList(record.capabilities);
+  const suppliedArchitecture = architectureList(record.architecture);
+  const architecture = suppliedArchitecture.length ? suppliedArchitecture : [
+    {
+      label: "Input",
+      title: "Define the system input",
+      detail: "The workflow begins with an explicit user, event, document, or service input and validates the state required for processing.",
+      technologies: techStack.slice(0, 2),
+    },
+    {
+      label: "Process",
+      title: "Execute the core workflow",
+      detail: "Domain logic coordinates the central transformation, automation, reasoning, or product operation behind the system.",
+      technologies: techStack.slice(2, 4),
+    },
+    {
+      label: "Integrate",
+      title: "Cross explicit service boundaries",
+      detail: "External APIs, storage, model providers, and platform services remain behind controlled integration boundaries.",
+      technologies: techStack.slice(4, 6),
+    },
+    {
+      label: "Deliver",
+      title: "Return an actionable result",
+      detail: "The system produces a user-facing response, structured dataset, automated operation, or inspectable product outcome.",
+      technologies: techStack.slice(6, 8),
+    },
+  ];
+  const notes = engineeringNotes(record.engineeringNotes);
 
   return {
     slug,
@@ -97,14 +127,24 @@ export function normalizeProjectInput(input: unknown): ProjectWrite {
     imageAlt: cleanText(record.imageAlt) || `${title} system architecture`,
     featured: Boolean(record.featured),
     sortOrder: Number.isFinite(Number(record.sortOrder)) ? Number(record.sortOrder) : 0,
-    techStack: textList(record.techStack),
+    techStack,
     proof: proofList(record.proof),
     challenge: cleanText(record.challenge) || description,
     system: cleanText(record.system) || description,
     outcome: cleanText(record.outcome) || "The system is represented in the reviewed portfolio archive.",
-    capabilities: textList(record.capabilities),
-    architecture: architectureList(record.architecture),
-    engineeringNotes: engineeringNotes(record.engineeringNotes),
+    capabilities: capabilities.length ? capabilities : [
+      "Defined input and validation boundary",
+      "Maintainable core workflow",
+      "Explicit integration contracts",
+      "Inspectable delivery outcome",
+    ],
+    architecture,
+    engineeringNotes: notes.length ? notes : [
+      {
+        title: "Boundaries stay explicit",
+        detail: "Inputs, core processing, integrations, and outcomes are separated so the system remains legible and maintainable.",
+      },
+    ],
     verification: cleanText(record.verification, "Project record maintained through the portfolio CMS"),
   };
 }

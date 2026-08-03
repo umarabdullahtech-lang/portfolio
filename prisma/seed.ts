@@ -1,9 +1,12 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcryptjs';
 import { portfolioProjects } from '../src/data/projects.js';
 import { projectToRecord } from '../src/lib/project-record.js';
+
+config({ path: '.env.local' });
+config();
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -12,14 +15,20 @@ async function main() {
   console.log('Seeding database...');
 
   // Admin user
-  const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', 10);
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword || adminPassword.length < 12) {
+    throw new Error('ADMIN_EMAIL and an ADMIN_PASSWORD of at least 12 characters are required');
+  }
+
+  const hashedPassword = await bcrypt.hash(adminPassword, 12);
   await prisma.adminUser.upsert({
-    where: { email: process.env.ADMIN_EMAIL || 'admin@umar-abdullah.com' },
-    update: {},
+    where: { email: adminEmail },
+    update: { password: hashedPassword, name: process.env.ADMIN_NAME || 'Umar Abdullah' },
     create: {
-      email: process.env.ADMIN_EMAIL || 'admin@umar-abdullah.com',
+      email: adminEmail,
       password: hashedPassword,
-      name: 'Umar Abdullah',
+      name: process.env.ADMIN_NAME || 'Umar Abdullah',
     },
   });
   console.log('Admin user created');

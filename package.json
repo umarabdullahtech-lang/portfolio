@@ -5,9 +5,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
-    "sync:projects": "tsx scripts/sync-projects.ts"
+    "sync:projects": "tsx scripts/sync-projects.ts",
+    "db:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:backup": "powershell -ExecutionPolicy Bypass -File scripts/backup-db.ps1",
+    "db:create-admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -16,6 +21,7 @@
     "@react-three/fiber": "^9.6.1",
     "@types/react-syntax-highlighter": "^15.5.13",
     "bcryptjs": "^3.0.3",
+    "dotenv": "^16.6.1",
     "framer-motion": "^12.38.0",
     "gsap": "^3.15.0",
     "jsonwebtoken": "^9.0.3",
