@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { portfolioProjects } from '@/data/projects';
+import { recordToProject } from './project-record';
 
 export async function getBlogPosts() {
   return prisma.blogPost.findMany({
@@ -20,28 +20,15 @@ export async function getBlogPost(slug: string) {
 }
 
 export async function getProjects() {
-  const storedProjects = await prisma.project.findMany({
-    where: { id: { in: portfolioProjects.map((project) => project.id) } },
+  const projects = await prisma.project.findMany({
+    orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
   });
-  const storedById = new Map(storedProjects.map((project) => [project.id, project]));
+  return projects.map(recordToProject);
+}
 
-  return portfolioProjects
-    .map((project) => {
-      const stored = storedById.get(project.id);
-      if (!stored) return project;
-      return {
-        ...project,
-        title: stored.title,
-        description: stored.description,
-        techStack: stored.techStack,
-        liveUrl: stored.liveUrl || project.liveUrl,
-        githubUrl: stored.githubUrl,
-        image: stored.image || project.image,
-        featured: stored.featured,
-        sortOrder: stored.sortOrder,
-      };
-    })
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+export async function getProjectBySlug(slug: string) {
+  const project = await prisma.project.findUnique({ where: { slug } });
+  return project ? recordToProject(project) : null;
 }
 
 export async function getExperiences() {

@@ -1,3 +1,10 @@
+import catalog1 from "./project-catalog-1.generated.json";
+import catalog2 from "./project-catalog-2.generated.json";
+import catalog3 from "./project-catalog-3.generated.json";
+import catalog4 from "./project-catalog-4.generated.json";
+import catalog5 from "./project-catalog-5.generated.json";
+import catalog6 from "./project-catalog-6.generated.json";
+
 export type ProjectArchitectureStage = {
   label: string;
   title: string;
@@ -15,8 +22,8 @@ export type PortfolioProject = {
   category: string;
   role: string;
   period: string;
-  status: "Live";
-  liveUrl: string;
+  status: "Live" | "Documented";
+  liveUrl: string | null;
   githubUrl: string | null;
   image: string;
   imageAlt: string;
@@ -33,7 +40,7 @@ export type PortfolioProject = {
   verification: string;
 };
 
-export const portfolioProjects: PortfolioProject[] = [
+const curatedPortfolioProjects: PortfolioProject[] = [
   {
     id: "jhb-property",
     slug: "jhb-property-intelligence",
@@ -123,7 +130,7 @@ export const portfolioProjects: PortfolioProject[] = [
   {
     id: "jorge-castro",
     slug: "jorge-castro-ai",
-    title: "Jorge Castro AI",
+    title: "AI Visibility Platform",
     kicker: "A queue-backed AI visibility and content platform",
     description:
       "A multi-surface SaaS platform for AI search visibility, SEO intelligence, content production, rank tracking, reporting, and automated publishing across customer sites.",
@@ -135,8 +142,8 @@ export const portfolioProjects: PortfolioProject[] = [
     status: "Live",
     liveUrl: "https://telesales.jorgecastro.ai/",
     githubUrl: null,
-    image: "/projects/jorge-castro.png",
-    imageAlt: "Jorge Castro AI telesales production sign-in screen",
+    image: "/projects/project-system.svg",
+    imageAlt: "AI Visibility Platform system architecture",
     featured: true,
     sortOrder: 2,
     techStack: ["Next.js", "Node.js", "LangChain", "OpenAI", "Anthropic", "Gemini", "Redis", "MySQL", "Playwright", "Docker"],
@@ -209,7 +216,7 @@ export const portfolioProjects: PortfolioProject[] = [
   {
     id: "jorge-chatbot",
     slug: "jorge-chatbot",
-    title: "Jorge Chatbot",
+    title: "Grounded AI Chatbot",
     kicker: "Multi-model RAG with an embeddable delivery layer",
     description:
       "A white-label conversational AI platform that ingests business knowledge, evaluates retrieval quality, generates grounded answers, and delivers them through hosted chat and an embeddable website widget.",
@@ -221,8 +228,8 @@ export const portfolioProjects: PortfolioProject[] = [
     status: "Live",
     liveUrl: "https://bot.jorgecastro.ai/",
     githubUrl: null,
-    image: "/projects/jorge-chatbot.png",
-    imageAlt: "Jorge Chatbot production sign-in screen",
+    image: "/projects/project-system.svg",
+    imageAlt: "Grounded AI Chatbot system architecture",
     featured: true,
     sortOrder: 3,
     techStack: ["Next.js", "Express", "LangChain", "LangGraph", "OpenAI", "Anthropic", "Gemini", "Pinecone", "MySQL", "Docker"],
@@ -295,10 +302,10 @@ export const portfolioProjects: PortfolioProject[] = [
   {
     id: "jorge-castro-wp-plugin",
     slug: "jorge-castro-wordpress-bridge",
-    title: "JorgeCastro WordPress Bridge",
+    title: "WordPress AI Publishing Bridge",
     kicker: "A secure publishing plane between SaaS and WordPress",
     description:
-      "A production WordPress plugin that lets the JorgeCastro SaaS manage content, WooCommerce catalog data, authors, categories, and SEO metadata through a versioned authenticated REST API.",
+      "A production WordPress plugin that lets an AI SaaS platform manage content, WooCommerce catalog data, authors, categories, and SEO metadata through a versioned authenticated REST API.",
     shortDescription:
       "Versioned API-key authentication, WordPress and WooCommerce handlers, SEO metadata adapters, and controlled remote publishing.",
     category: "Platform Integration",
@@ -307,8 +314,8 @@ export const portfolioProjects: PortfolioProject[] = [
     status: "Live",
     liveUrl: "https://saas.jorgecastro.ai/",
     githubUrl: null,
-    image: "/projects/jorge-castro-wp-plugin.png",
-    imageAlt: "JorgeCastro SaaS production sign-in screen connected to the WordPress bridge",
+    image: "/projects/project-system.svg",
+    imageAlt: "WordPress AI Publishing Bridge system architecture",
     featured: true,
     sortOrder: 4,
     techStack: ["PHP", "WordPress", "WooCommerce", "REST API", "Yoast SEO", "Rank Math", "JavaScript"],
@@ -320,7 +327,7 @@ export const portfolioProjects: PortfolioProject[] = [
     challenge:
       "Remote publishing must work across heterogeneous WordPress installations, optional WooCommerce and SEO plugins, restrictive security plugins, and sites where the REST API may be disabled. The integration also needs strict authentication and safe content ownership semantics.",
     system:
-      "The plugin registers a jorgecastro/v1 namespace, authenticates requests with a constant-time API-key comparison or an administrator capability, then routes operations to focused handlers for authors, pages, posts, products, categories, and SEO metadata. Connection lifecycle and REST recovery remain explicit administrator actions.",
+      "The plugin registers a versioned REST namespace, authenticates requests with a constant-time API-key comparison or an administrator capability, then routes operations to focused handlers for authors, pages, posts, products, categories, and SEO metadata. Connection lifecycle and REST recovery remain explicit administrator actions.",
     outcome:
       "The SaaS can publish and maintain structured content across customer sites without sharing WordPress credentials or coupling platform workflows to WordPress internals.",
     capabilities: [
@@ -349,7 +356,7 @@ export const portfolioProjects: PortfolioProject[] = [
       {
         label: "Route",
         title: "A versioned namespace protects the public API contract",
-        detail: "jorgecastro/v1 dispatches connection, author, post, page, product, category, metadata, and log operations.",
+        detail: "The versioned plugin namespace dispatches connection, author, post, page, product, category, metadata, and log operations.",
         technologies: ["WP REST API", "JSON", "Postman"],
       },
       {
@@ -639,10 +646,10 @@ export const portfolioProjects: PortfolioProject[] = [
   {
     id: "jorge-site",
     slug: "jorge-castro-product-site",
-    title: "JorgeCastro Product Site",
+    title: "AI Platform Product Site",
     kicker: "The multilingual front door to an AI SEO platform",
     description:
-      "The public product and acquisition surface for JorgeCastro AI, connecting multilingual marketing, product education, registration, pricing, analytics, and the authenticated SaaS experience.",
+      "The public product and acquisition surface for an AI visibility platform, connecting multilingual marketing, product education, registration, pricing, analytics, and the authenticated SaaS experience.",
     shortDescription:
       "A multilingual product surface that translates a complex AI SEO platform into a clear acquisition, registration, and product-education journey.",
     category: "Product Experience",
@@ -651,8 +658,8 @@ export const portfolioProjects: PortfolioProject[] = [
     status: "Live",
     liveUrl: "https://jorgecastro.ai/en",
     githubUrl: null,
-    image: "/projects/jorge-site.png",
-    imageAlt: "JorgeCastro AI live multilingual product homepage",
+    image: "/projects/project-system.svg",
+    imageAlt: "AI Platform Product Site system architecture",
     featured: false,
     sortOrder: 8,
     techStack: ["Next.js", "React", "next-intl", "Express", "Redis", "MySQL", "Stripe", "Docker"],
@@ -664,7 +671,7 @@ export const portfolioProjects: PortfolioProject[] = [
     challenge:
       "The public site has to explain an unusually broad platform without reproducing the application itself. It also needs localized content, clean registration and pricing paths, privacy controls, analytics, and a reliable transition into the authenticated product.",
     system:
-      "A localized Next.js application owns the public experience and product education. It connects to shared Express services for dynamic platform concerns, uses Redis and MySQL for application state, and hands registration, subscriptions, and authenticated use into the wider JorgeCastro ecosystem.",
+      "A localized Next.js application owns the public experience and product education. It connects to shared Express services for dynamic platform concerns, uses Redis and MySQL for application state, and hands registration, subscriptions, and authenticated use into the wider AI product ecosystem.",
     outcome:
       "The platform presents one coherent promise from first visit through account creation while keeping the deeper AI visibility, content, tracking, and publishing capabilities discoverable.",
     capabilities: [
@@ -890,6 +897,218 @@ export const portfolioProjects: PortfolioProject[] = [
     ],
     verification: "Public upstream demo and nested source repository reviewed on 2026-07-16; no personal authorship claim",
   },
+];
+
+type CatalogProject = {
+  id: string;
+  title: string;
+  description: string;
+  liveUrl: string | null;
+  liveUrlStatus: string;
+  primaryRepository: string | null;
+  repositoryCount: number;
+  technologies: string[];
+  architecture: {
+    hasFrontend: boolean;
+    hasBackend: boolean;
+    hasAI: boolean;
+    hasDatabase: boolean;
+    hasExternalIntegrations: boolean;
+    hasDocker: boolean;
+    hasExtensionOrPlugin: boolean;
+    isAutomation: boolean;
+    packageCount: number;
+    entryAction: string;
+    coreWorkflow: string;
+    outcome: string;
+    integrationBoundary: string;
+  };
+};
+
+const projectCatalog: CatalogProject[] = [
+  ...catalog1,
+  ...catalog2,
+  ...catalog3,
+  ...catalog4,
+  ...catalog5,
+  ...catalog6,
+];
+
+export const BRAND_NEUTRAL_PROJECT_IDS = [
+  "jorge-castro",
+  "jorge-chatbot",
+  "jorge-castro-wp-plugin",
+  "jorge-site",
+  "jorge-gpt",
+  "jorge-shopify-plugin",
+  "jorge-whitelabel",
+] as const;
+
+const projectIdentityOverrides: Partial<Record<(typeof BRAND_NEUTRAL_PROJECT_IDS)[number], { title: string; description?: string }>> = {
+  "jorge-gpt": {
+    title: "Multi-Model LLM Gateway",
+  },
+  "jorge-shopify-plugin": {
+    title: "Shopify AI Commerce Connector",
+    description: "A Shopify application that connects ecommerce stores to AI services and automated commerce workflows.",
+  },
+  "jorge-whitelabel": {
+    title: "White-Label AI Platform",
+    description: "A white-label AI platform designed for branded client deployments.",
+  },
+};
+
+function classifyProject(project: CatalogProject) {
+  const architecture = project.architecture;
+  if (architecture.hasAI && architecture.isAutomation) return "AI Automation";
+  if (architecture.hasAI) return "AI / ML System";
+  if (architecture.hasExtensionOrPlugin) return "Extension / Plugin";
+  if (architecture.isAutomation) return "Automation System";
+  if (architecture.hasFrontend && architecture.hasBackend) return "Full-stack Product";
+  if (architecture.hasBackend) return "Backend / API";
+  if (architecture.hasFrontend) return "Product Experience";
+  return "Engineering Utility";
+}
+
+function compactDescription(description: string) {
+  const normalized = description.replace(/\s+/g, " ").trim();
+  if (normalized.length <= 190) return normalized;
+  return `${normalized.slice(0, 187).trimEnd()}…`;
+}
+
+function githubUrl(repository: string | null) {
+  if (!repository) return null;
+  if (/^https?:\/\//i.test(repository)) return repository;
+  return `https://github.com/${repository.replace(/^\/+|\/+$/g, "")}`;
+}
+
+function projectStack(project: CatalogProject) {
+  const stack = Array.from(new Set(project.technologies.filter(Boolean)));
+  if (stack.length) return stack;
+
+  const inferred = [
+    project.architecture.hasFrontend && "Frontend Engineering",
+    project.architecture.hasBackend && "Backend Engineering",
+    project.architecture.hasAI && "Applied AI",
+    project.architecture.hasDatabase && "Data Systems",
+    project.architecture.isAutomation && "Automation",
+  ].filter((item): item is string => Boolean(item));
+
+  return inferred.length ? inferred : ["Software Architecture"];
+}
+
+function architectureTechnologies(stack: string[], offset: number) {
+  const selected = [stack[offset % stack.length], stack[(offset + 1) % stack.length]];
+  return Array.from(new Set(selected));
+}
+
+function generatedCapabilities(project: CatalogProject) {
+  const architecture = project.architecture;
+  const capabilities = [
+    `${architecture.entryAction} intake and validation`,
+    `${architecture.coreWorkflow} execution`,
+    `${architecture.integrationBoundary} integration boundary`,
+    `${architecture.outcome} delivery`,
+    architecture.hasAI && "AI-assisted reasoning and model orchestration",
+    architecture.hasDatabase && "Persistent data and state management",
+    architecture.isAutomation && "Repeatable automation and recovery paths",
+    architecture.hasExternalIntegrations && "External service and API coordination",
+    architecture.hasDocker && "Containerized delivery workflow",
+    architecture.hasExtensionOrPlugin && "Host-platform extension lifecycle",
+  ].filter((item): item is string => Boolean(item));
+
+  return Array.from(new Set(capabilities)).slice(0, 8);
+}
+
+function createCatalogProject(project: CatalogProject, sortOrder: number): PortfolioProject {
+  const category = classifyProject(project);
+  const techStack = projectStack(project);
+  const isLive = project.liveUrlStatus === "verified-live" && Boolean(project.liveUrl);
+  const architecture = project.architecture;
+  const identity = projectIdentityOverrides[project.id as (typeof BRAND_NEUTRAL_PROJECT_IDS)[number]];
+  const title = identity?.title || project.title;
+  const description = identity?.description || project.description;
+
+  return {
+    id: project.id,
+    slug: project.id,
+    title,
+    kicker: `${category} / reviewed system architecture`,
+    description,
+    shortDescription: compactDescription(description),
+    category,
+    role: "Product and systems engineering",
+    period: isLive ? "Production" : "Source archive",
+    status: isLive ? "Live" : "Documented",
+    liveUrl: isLive ? project.liveUrl : null,
+    githubUrl: githubUrl(project.primaryRepository),
+    image: project.id === "wyz-ai" ? "/projects/wyz-ai.png" : "/projects/project-system.svg",
+    imageAlt: isLive
+      ? `${title} live product interface`
+      : `${title} system architecture cover`,
+    featured: false,
+    sortOrder,
+    techStack,
+    proof: [
+      { value: String(Math.max(project.repositoryCount, project.primaryRepository ? 1 : 0)), label: "source repositories indexed" },
+      { value: String(architecture.packageCount), label: "application packages detected" },
+      { value: String(techStack.length), label: "core technologies mapped" },
+    ],
+    challenge: `${description} The engineering challenge is to turn that scope into a legible system with explicit inputs, dependable workflow boundaries, and an outcome that can be inspected and maintained.`,
+    system: `The reviewed implementation routes ${architecture.entryAction.toLowerCase()} through ${architecture.coreWorkflow.toLowerCase()}, crosses ${architecture.integrationBoundary.toLowerCase()} where required, and produces ${architecture.outcome.toLowerCase()}.`,
+    outcome: isLive
+      ? `${title} is represented by a verified public deployment and a reviewed source inventory. The case study keeps the implementation path visible without inventing unsupported performance claims.`
+      : `${title} is included as documented engineering work. Its source structure, technology stack, and functional flow are presented here even though no verified public deployment is currently available.`,
+    capabilities: generatedCapabilities(project),
+    architecture: [
+      {
+        label: "Input",
+        title: architecture.entryAction,
+        detail: "The workflow begins with a defined user, event, document, media, or service input and establishes the state required for processing.",
+        technologies: architectureTechnologies(techStack, 0),
+      },
+      {
+        label: "Process",
+        title: architecture.coreWorkflow,
+        detail: "Domain logic coordinates the central transformation, reasoning, automation, or product workflow behind the project.",
+        technologies: architectureTechnologies(techStack, 2),
+      },
+      {
+        label: "Integrate",
+        title: architecture.integrationBoundary,
+        detail: "External APIs, model providers, storage, platform services, or host applications are kept behind an explicit integration boundary.",
+        technologies: architectureTechnologies(techStack, 4),
+      },
+      {
+        label: "Deliver",
+        title: architecture.outcome,
+        detail: "The system returns an actionable product result, structured dataset, automated operation, or user-facing response.",
+        technologies: architectureTechnologies(techStack, 6),
+      },
+    ],
+    engineeringNotes: [
+      { title: "The source remains the evidence", detail: "Descriptions and architecture are grounded in the indexed repository structure, package metadata, and reviewed functional flow." },
+      { title: "Boundaries stay explicit", detail: "Inputs, core workflow, integrations, and outcomes are separated so the system can be understood without relying on a public demo." },
+      { title: "Deployment status is honest", detail: isLive ? "A verified live URL is shown as deployment evidence." : "No live action is displayed because a public deployment could not be verified." },
+    ],
+    verification: isLive
+      ? "Live product and source inventory reviewed on 2026-07-16"
+      : "Source tree and architecture inventory reviewed on 2026-07-16; no public deployment verified",
+  };
+}
+
+const curatedIds = new Set(curatedPortfolioProjects.map((project) => project.id));
+const generatedPortfolioProjects = projectCatalog
+  .filter((project) => !curatedIds.has(project.id))
+  .sort((first, second) => {
+    const liveDifference = Number(Boolean(second.liveUrl)) - Number(Boolean(first.liveUrl));
+    return liveDifference || first.title.localeCompare(second.title);
+  })
+  .map((project, index) => createCatalogProject(project, curatedPortfolioProjects.length + index + 1));
+
+export const portfolioProjects: PortfolioProject[] = [
+  ...curatedPortfolioProjects,
+  ...generatedPortfolioProjects,
 ];
 
 export function getPortfolioProject(slug: string) {

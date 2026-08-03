@@ -28,17 +28,33 @@ model BlogPost {
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  techStack   String[]
-  liveUrl     String?
-  githubUrl   String?
-  image       String?
-  featured    Boolean  @default(false)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  title            String
+  kicker           String   @default("")
+  description      String
+  shortDescription String   @default("")
+  category         String   @default("Engineering System")
+  role             String   @default("Product and systems engineering")
+  period           String   @default("Documented")
+  status           String   @default("Documented")
+  liveUrl          String?
+  githubUrl        String?
+  image            String?
+  imageAlt         String   @default("")
+  featured         Boolean  @default(false)
+  sortOrder        Int      @default(0)
+  techStack        String[]
+  proof            Json     @default("[]")
+  challenge        String   @default("")
+  system           String   @default("")
+  outcome          String   @default("")
+  capabilities     String[]
+  architecture     Json     @default("[]")
+  engineeringNotes Json     @default("[]")
+  verification     String   @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@map("projects")
 }

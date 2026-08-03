@@ -1,0 +1,17 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Automation Trigger / CLI"]
+    USER -->|"Targets / Collection Policy"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    CORE["Acquisition, Parsing & Enrichment"]
+    ENTRY -->|"Command / Event"| CORE
+  end
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Structured Dataset"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

@@ -1,0 +1,69 @@
+flowchart LR
+  OWNER["Workspace Owner"] --> CONSOLE["Next.js / Chakra UI Console"]
+  VISITOR["Website Visitor"] --> WIDGET["Embedded Chat Bubble"]
+
+  subgraph CONTROL["Bot Control Plane"]
+    AUTH["NextAuth + Account Identity"]
+    BOT["Bot Creation + Configuration"]
+    BRAND["Brand + Appearance Settings"]
+    SOURCES["Knowledge Source Management"]
+    BILLING["Stripe Subscription State"]
+    CONSOLE --> AUTH
+    CONSOLE --> BOT
+    BOT --> BRAND
+    BOT --> SOURCES
+    CONSOLE --> BILLING
+  end
+
+  subgraph INGEST["Knowledge Ingestion"]
+    FILES["Documents + Files"]
+    WEB["Website Content"]
+    EXTRACT["Extraction + Cleaning"]
+    CHUNK["Chunking + Metadata"]
+    EMBED["Embedding Generation"]
+    VECTOR[("Pinecone Vector Index")]
+    SOURCES --> FILES
+    SOURCES --> WEB
+    FILES --> EXTRACT
+    WEB --> EXTRACT
+    EXTRACT --> CHUNK --> EMBED --> VECTOR
+  end
+
+  subgraph CONVERSATION["Grounded Chat Path"]
+    API["Express Conversation API"]
+    CONTEXT["Tenant + Bot Context"]
+    RETRIEVE["Semantic Retrieval"]
+    CHAIN["LangChain Prompt + Generation"]
+    RESPONSE["Streamed / Structured Answer"]
+    WIDGET --> API --> CONTEXT --> RETRIEVE
+    VECTOR --> RETRIEVE
+    RETRIEVE --> CHAIN --> RESPONSE --> WIDGET
+  end
+
+  subgraph STATE["Product State"]
+    MYSQL[("MySQL")]
+    S3[("AWS S3")]
+    HISTORY["Conversation History"]
+    LEADS["Lead Capture"]
+    AUTH --> MYSQL
+    BOT --> MYSQL
+    FILES --> S3
+    RESPONSE --> HISTORY --> MYSQL
+    WIDGET --> LEADS --> MYSQL
+  end
+
+  subgraph OPERATIONS["Delivery + Operations"]
+    ANALYTICS["Admin Analytics"]
+    INBOX["Conversation Inbox"]
+    FEEDBACK["Review + Refinement"]
+    LOGS["Application Logging"]
+    MYSQL --> ANALYTICS --> CONSOLE
+    HISTORY --> INBOX --> CONSOLE
+    CONSOLE --> FEEDBACK --> MYSQL
+    API --> LOGS
+  end
+
+  BRAND --> WIDGET
+  RESPONSE --> VISITOR
+
+

@@ -1,0 +1,18 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Automation Trigger / CLI"]
+    USER -->|"Trigger / Event Payload"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    API["PHP Application Layer"]
+    CORE["Rules, Scheduling & Automation"]
+    ENTRY -->|"Request"| API --> CORE
+  end
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Automated Action / Status"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

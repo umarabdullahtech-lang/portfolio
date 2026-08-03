@@ -75,7 +75,7 @@ flowchart LR
   end
 
   subgraph PUBLISH["Controlled Publishing Boundary"]
-    WP["JorgeCastro WordPress REST Bridge"]
+    WP["WordPress AI Publishing Bridge"]
     COMMERCE["WooCommerce / Shopify Adapters"]
     STORAGE["S3 + Google Cloud Storage"]
     OPTIMIZE --> WP
@@ -98,4 +98,3 @@ flowchart LR
 
   WP --> TRACKERS
   COMMERCE --> TRACKERS
-

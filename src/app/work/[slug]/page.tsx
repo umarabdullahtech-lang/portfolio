@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProjects, getSiteSettings } from "@/lib/data";
-import { getPortfolioProject } from "@/data/projects";
+import { getProjectBySlug, getProjects, getSiteSettings } from "@/lib/data";
 import ProjectCaseStudy from "@/components/ProjectCaseStudy";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +9,7 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const project = getPortfolioProject(slug);
+  const project = await getProjectBySlug(slug);
   if (!project) return { title: "Case Study Not Found | Umar Abdullah" };
   return {
     title: `${project.title} - Case Study | Umar Abdullah`,

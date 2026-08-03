@@ -16,14 +16,23 @@ import styles from "./WorkArchive.module.css";
 if (typeof window !== "undefined") gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export type ArchiveProject = PortfolioProject;
+export type ArchiveProjectSummary = Pick<
+  PortfolioProject,
+  "id" | "slug" | "title" | "shortDescription" | "category" | "role" | "techStack"
+>;
 
 type Props = {
-  projects: ArchiveProject[];
+  liveProjects: ArchiveProject[];
+  documentedProjects: ArchiveProjectSummary[];
   settings: Record<string, string>;
 };
 
-export default function WorkArchive({ projects, settings }: Props) {
+export default function WorkArchive({ liveProjects, documentedProjects, settings }: Props) {
   const scope = useRef<HTMLDivElement>(null);
+  const liveCount = liveProjects.length;
+  const documentedCount = documentedProjects.length;
+  const projectCount = liveCount + documentedCount;
+  const firstProject = liveProjects[0] || documentedProjects[0];
 
   useGSAP(
     () => {
@@ -77,35 +86,44 @@ export default function WorkArchive({ projects, settings }: Props) {
             <SpatialScene />
           </div>
           <div className={styles.heroGrid} aria-hidden="true" />
-          <p className={styles.eyebrow}>Live production systems</p>
-          <h1 data-work-title>
-            <span>Evidence in</span>
-            <span>production.</span>
+          <p className={styles.eyebrow}>Complete systems archive</p>
+          <h1 data-work-title aria-label={`${projectCount} systems. Built to work.`}>
+            <span><data value={projectCount}>{projectCount}</data> systems.</span>
+            <span>Built to work.</span>
           </h1>
           <div className={styles.heroBottom}>
             <p>
-              {projects.length} reachable systems spanning decision intelligence, AI platforms, retrieval, commerce, and transparent open-source references.
+              A reviewed record of production AI, platforms, automation, commerce, data systems, and engineering tools.
             </p>
-            <Link href={`/work/${projects[0]?.slug || "jhb-property-intelligence"}`}>
-              Start with the flagship <ArrowUpRight aria-hidden="true" />
+            <div className={styles.heroMetrics} aria-label="Project archive totals">
+              <span><strong>{String(liveCount).padStart(2, "0")}</strong> Live</span>
+              <span><strong>{String(documentedCount).padStart(2, "0")}</strong> Source-reviewed</span>
+            </div>
+            <Link href={`/work/${firstProject?.slug || "jhb-property-intelligence"}`}>
+              Open the flagship <ArrowUpRight aria-hidden="true" />
             </Link>
           </div>
         </section>
 
-        <section className={styles.index} id="case-index" aria-label="Selected project case studies">
+        <section className={styles.index} id="case-index" aria-label="Complete project case-study index">
           <header>
-            <p>Live case index</p>
+            <p>Complete project index</p>
             <p>AI / Software / Platforms</p>
-            <p>{projects.length} reachable systems</p>
+            <p>{liveCount} live / {documentedCount} documented</p>
           </header>
 
+          <div className={styles.archiveBand}>
+            <span>01 / Verified live systems</span>
+            <strong>{String(liveCount).padStart(2, "0")} public deployments</strong>
+          </div>
+
           <div className={styles.projectList}>
-            {projects.map((project) => (
+            {liveProjects.map((project) => (
               <article className={styles.project} data-work-item key={project.id}>
                 <div className={styles.projectMeta}>
                   <span>{project.category}</span>
                   <strong>{project.role}</strong>
-                  <data>{project.proof[0]?.value || "Live"} / {project.proof[0]?.label || "deployed"}</data>
+                  <data>{project.liveUrl ? "Live / verified" : "Source / reviewed"}</data>
                 </div>
 
                 <Link href={`/work/${project.slug}`} className={styles.visualLink} aria-label={`View ${project.title} case study`}>
@@ -123,10 +141,36 @@ export default function WorkArchive({ projects, settings }: Props) {
                   <ul aria-label="Technology stack">
                     {project.techStack.slice(0, 8).map((tech) => <li key={tech}>{tech}</li>)}
                   </ul>
-                  <a className={styles.liveLink} href={project.liveUrl} target="_blank" rel="noreferrer">
-                    Open live product <ExternalLink aria-hidden="true" />
-                  </a>
+                  {project.liveUrl && project.liveUrl !== "#" && (
+                    <a className={styles.liveLink} href={project.liveUrl} target="_blank" rel="noreferrer">
+                      Open live product <ExternalLink aria-hidden="true" />
+                    </a>
+                  )}
                 </div>
+              </article>
+            ))}
+          </div>
+
+          <div className={styles.archiveBand}>
+            <span>02 / Source-reviewed systems</span>
+            <strong>{String(documentedCount).padStart(2, "0")} documented projects</strong>
+          </div>
+
+          <div className={styles.documentedGrid}>
+            {documentedProjects.map((project, projectIndex) => (
+              <article className={styles.documentedProject} key={project.id}>
+                <div className={styles.documentedMeta}>
+                  <span>{String(projectIndex + 1).padStart(2, "0")}</span>
+                  <span>{project.category}</span>
+                </div>
+                <Link href={`/work/${project.slug}`}>
+                  <h2>{project.title}</h2>
+                  <ArrowUpRight aria-hidden="true" />
+                </Link>
+                <p>{project.shortDescription}</p>
+                <ul aria-label={`${project.title} technology stack`}>
+                  {project.techStack.slice(0, 4).map((tech) => <li key={tech}>{tech}</li>)}
+                </ul>
               </article>
             ))}
           </div>

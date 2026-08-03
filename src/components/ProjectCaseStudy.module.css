@@ -9,7 +9,7 @@
 .hero {
   position: relative;
   display: flex;
-  min-height: 100dvh;
+  min-height: clamp(640px, 92dvh, 860px);
   flex-direction: column;
   padding: 7.5rem max(2rem, calc((100vw - 1320px) / 2)) 2.2rem;
   overflow: hidden;
@@ -84,9 +84,9 @@
   display: grid;
   flex: 1;
   grid-template-columns: .91fr 1.09fr;
-  align-items: center;
+  align-items: start;
   gap: clamp(2.5rem, 5vw, 6rem);
-  padding-top: 2rem;
+  padding-top: clamp(2.3rem, 5dvh, 4rem);
 }
 
 .heroCopy { min-width: 0; }

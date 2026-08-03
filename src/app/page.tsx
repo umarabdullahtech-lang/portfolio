@@ -17,6 +17,20 @@ export default async function Home() {
     getExperiences(),
     getSkills(),
   ]);
+  const homeProjects = projects
+    .filter((project) => project.category !== "Open-source Reference")
+    .slice(0, 6);
+  const liveProjectCount = projects.filter((project) => project.liveUrl && project.liveUrl !== "#").length;
 
-  return <PortfolioExperience settings={settings} posts={featuredPosts} projects={projects} experiences={experiences} skills={skills} />;
+  return (
+    <PortfolioExperience
+      settings={settings}
+      posts={featuredPosts}
+      projects={homeProjects}
+      projectCount={projects.length}
+      liveProjectCount={liveProjectCount}
+      experiences={experiences}
+      skills={skills}
+    />
+  );
 }

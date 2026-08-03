@@ -1,0 +1,33 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Next.js Web Interface"]
+    USER -->|"Targets / Collection Policy"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    API["Express Application API"]
+    CORE["Acquisition, Parsing & Enrichment"]
+    ENTRY -->|"Request"| API --> CORE
+  end
+
+  subgraph ID["Intelligence & Data Layer"]
+    AI["LangChain / Model Orchestration"]
+    DATA["Project Data Store"]
+  end
+  CORE -->|"Context / Task"| AI
+  AI -->|"Enriched Result"| CORE
+  CORE -->|"Read / Write"| DATA
+  DATA -->|"State / Records"| CORE
+
+  subgraph EXT["Integration Layer"]
+    SERVICES["Web Sources, Proxies & Enrichment APIs"]
+  end
+  CORE -->|"Validated Integration Call"| SERVICES
+  SERVICES -->|"Response / Event"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Structured Dataset"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

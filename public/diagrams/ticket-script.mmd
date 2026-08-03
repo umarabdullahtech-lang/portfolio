@@ -1,0 +1,24 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Next.js Web Interface"]
+    USER -->|"Input / Action"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    API["Express Application API"]
+    CORE["Domain & Workflow Logic"]
+    ENTRY -->|"Request"| API --> CORE
+  end
+
+  subgraph ID["Intelligence & Data Layer"]
+    DATA["Project Data Store"]
+  end
+  CORE -->|"Read / Write"| DATA
+  DATA -->|"State / Records"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Actionable Result / Automated Outcome"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

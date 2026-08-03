@@ -7,6 +7,7 @@ import {
   Code2, Settings, Mail, LogOut, Plus, Pencil, Trash2, Save, X, Eye, EyeOff
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import ProjectManager from "@/components/admin/ProjectManager";
 
 type Tab = "dashboard" | "blog" | "projects" | "experiences" | "skills" | "settings" | "contacts";
 
@@ -111,7 +112,7 @@ export default function AdminPage() {
       <main className="flex-1 p-8 overflow-auto">
         {tab === "dashboard" && <DashboardTab />}
         {tab === "blog" && <BlogTab />}
-        {tab === "projects" && <CrudTab entity="projects" fields={projectFields} />}
+        {tab === "projects" && <ProjectManager />}
         {tab === "experiences" && <CrudTab entity="experiences" fields={experienceFields} />}
         {tab === "skills" && <CrudTab entity="skills" fields={skillFields} />}
         {tab === "settings" && <SettingsTab />}
@@ -227,7 +228,7 @@ function BlogTab() {
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(() => {
-    fetch("/api/blog?limit=100").then((r) => r.json()).then((d) => setPosts(d.posts || []));
+    fetch("/api/blog?admin=1&limit=250", { credentials: "include" }).then((r) => r.json()).then((d) => setPosts(d.posts || []));
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -371,16 +372,6 @@ function BlogForm({ post, onSave, onCancel }: {
 }
 
 type FieldDef = { key: string; label: string; type: "text" | "number" | "textarea" | "boolean" | "tags"; };
-
-const projectFields: FieldDef[] = [
-  { key: "title", label: "Title", type: "text" },
-  { key: "description", label: "Description", type: "textarea" },
-  { key: "techStack", label: "Tech Stack (comma-separated)", type: "tags" },
-  { key: "liveUrl", label: "Live URL", type: "text" },
-  { key: "githubUrl", label: "GitHub URL", type: "text" },
-  { key: "featured", label: "Featured", type: "boolean" },
-  { key: "sortOrder", label: "Sort Order", type: "number" },
-];
 
 const experienceFields: FieldDef[] = [
   { key: "company", label: "Company", type: "text" },

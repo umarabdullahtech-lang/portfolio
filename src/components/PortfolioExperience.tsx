@@ -5,9 +5,9 @@ import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowDown, ArrowUpRight, Check, Send } from "lucide-react";
+import { ArrowUpRight, Check, Send } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import SpatialScene from "@/components/SpatialScene";
+import AsciiSpatialScene from "@/components/AsciiSpatialScene";
 import ProjectKnowledgeGraph from "@/components/ProjectKnowledgeGraph";
 import { GithubIcon, LinkedinIcon } from "@/components/SocialIcons";
 import type { PortfolioProject } from "@/data/projects";
@@ -51,6 +51,8 @@ type Post = {
 type Props = {
   settings: Record<string, string>;
   projects: Project[];
+  projectCount: number;
+  liveProjectCount: number;
   experiences: Experience[];
   skills: Skill[];
   posts: Post[];
@@ -197,7 +199,7 @@ function ProjectObservatory({ projects }: { projects: Project[] }) {
   );
 }
 
-export default function PortfolioExperience({ settings, projects, experiences, skills, posts }: Props) {
+export default function PortfolioExperience({ settings, projects, projectCount, liveProjectCount, experiences, skills, posts }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [formStatus, setFormStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -224,9 +226,9 @@ export default function PortfolioExperience({ settings, projects, experiences, s
       if (hero && scene) {
         const intro = gsap.timeline({ defaults: { ease: "power4.out" } });
         intro
-          .from("[data-hero-line]", { yPercent: 115, rotate: 2.5, duration: 1.15, stagger: 0.08 })
-          .from("[data-hero-fade]", { opacity: 0, y: 24, duration: 0.8, stagger: 0.07 }, "-=0.7")
-          .from("[data-visual-shell]", { opacity: 0, scale: 0.86, rotateY: -9, duration: 1.35 }, "-=1.15");
+          .from("[data-hero-line]", { opacity: 0.28, y: 38, rotate: 1.2, duration: 0.82, stagger: 0.06 }, 0)
+          .from("[data-hero-fade]", { opacity: 0.36, y: 14, duration: 0.68, stagger: 0.045 }, 0.04)
+          .from("[data-visual-shell]", { opacity: 0.24, scale: 0.94, rotateY: -4, duration: 0.92 }, 0.02);
 
         gsap.to(scene, {
           yPercent: 24,
@@ -492,17 +494,25 @@ export default function PortfolioExperience({ settings, projects, experiences, s
 
           <div className={styles.heroShell}>
             <div className={styles.heroCopy} data-hero-copy>
-              <div className={styles.heroAvailability} data-hero-fade>
-                <i aria-hidden="true" /> Available for select collaborations
+              <div className={styles.heroTopline} data-hero-fade>
+                <div className={styles.heroAvailability}>
+                  <i aria-hidden="true" /> Available for select collaborations
+                </div>
+                <span>PK / UTC+05</span>
               </div>
               <p className={styles.heroEyebrow} data-hero-fade>Umar Abdullah / Senior Software + AI Engineer</p>
-              <h1 className={styles.heroTitle} aria-label="I engineer software that thinks.">
-                <span className={styles.heroLine} data-line-index="01"><i data-hero-line>I engineer</i></span>
-                <span className={styles.heroLine} data-line-index="02"><i data-hero-line>software that</i></span>
-                <span className={`${styles.heroLine} ${styles.heroAccent}`} data-line-index="03"><i data-hero-line>thinks.</i></span>
+              <h1 className={styles.heroTitle} aria-label="Built for scale. Wired to think.">
+                <span className={styles.heroLine} data-line-index="01">
+                  <i data-hero-line>Built for scale.</i>
+                  <b aria-hidden="true">10Y / SOFTWARE</b>
+                </span>
+                <span className={`${styles.heroLine} ${styles.heroAccent}`} data-line-index="02">
+                  <i data-hero-line>Wired to think.</i>
+                  <b aria-hidden="true">05Y / AI</b>
+                </span>
               </h1>
               <p className={styles.heroLead} data-hero-fade>
-                Ten years engineering scalable software. Five years turning AI into production systems: agents, retrieval, automation, and platforms built for real-world load.
+                Ten years engineering scalable software. Five years shipping production AI—agents, retrieval, automation, and platforms built for real-world load.
               </p>
               <div className={styles.heroActions} data-hero-fade>
                 <Link href="/work" className={styles.primaryAction}>Explore selected work <i><ArrowUpRight size={16} /></i></Link>
@@ -511,9 +521,16 @@ export default function PortfolioExperience({ settings, projects, experiences, s
             </div>
 
             <div className={styles.heroVisual} data-visual-shell>
-              <div className={styles.scene} data-scene aria-hidden="true"><SpatialScene /></div>
+              <div className={styles.asciiMeta} data-hero-fade aria-hidden="true">
+                <span>ASCII / 3D</span>
+                <strong>Topology_01</strong>
+              </div>
+              <div className={styles.scene} data-scene aria-hidden="true">
+                <AsciiSpatialScene className={styles.asciiScene} />
+              </div>
+              <div className={styles.asciiAxis} aria-hidden="true"><i /><i /></div>
               <div className={styles.visualReadout} data-depth="-5">
-                <span>MODE</span>
+                <span>Live spatial model</span>
                 <strong>Production intelligence</strong>
                 <small>Agents / RAG / Automation</small>
               </div>
@@ -528,7 +545,7 @@ export default function PortfolioExperience({ settings, projects, experiences, s
             <div><data value="10">10</data><span>Years<br /><strong>software engineering</strong></span></div>
             <div><data value="5">05</data><span>Years<br /><strong>AI engineering</strong></span></div>
             <div className={styles.heroProofFocus}><span>Operating range</span><strong>Architecture → production → scale</strong></div>
-            <a href="#about" aria-label="Scroll to profile"><ArrowDown size={18} /></a>
+            <div className={styles.heroProofSignal}><i aria-hidden="true" /><span>Systems online<br /><strong>Open to complex work</strong></span></div>
           </div>
         </section>
 
@@ -536,7 +553,7 @@ export default function PortfolioExperience({ settings, projects, experiences, s
           <div className={styles.thesisSticky}>
             <p className={styles.sectionEyebrow}>A decade of engineering judgment</p>
             <h2 className={styles.thesisTitle}>
-              {"I design systems that learn, scale, and endure.".split(" ").map((word, index) => (
+              {"I design system that think.".split(" ").map((word, index) => (
                 <span key={`${word}-${index}`} data-thesis-word>{word}&nbsp;</span>
               ))}
             </h2>
@@ -591,7 +608,7 @@ export default function PortfolioExperience({ settings, projects, experiences, s
               <div className={styles.projectIntroCopy}>
                 <p className={styles.sectionEyebrow}>Selected systems</p>
                 <h2>Proof over promises.</h2>
-                <p>Six selected production systems. The full archive contains {projects.length} reachable products and transparent open-source references.</p>
+                <p>Six selected production systems. The full archive contains {projectCount} reviewed projects, including {liveProjectCount} verified live deployments.</p>
                 <div className={styles.railHint}><span /> Architecture / intelligence / operations</div>
               </div>
               <ProjectObservatory projects={homeProjects} />

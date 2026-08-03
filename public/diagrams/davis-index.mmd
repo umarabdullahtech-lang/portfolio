@@ -1,0 +1,37 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Next.js Web Interface"]
+    USER -->|"Message / Context"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    API["Express Application API"]
+    CORE["Conversation & Tool Orchestration"]
+    ENTRY -->|"Request"| API --> CORE
+  end
+
+  subgraph ID["Intelligence & Data Layer"]
+    AI["LangChain / Model Orchestration"]
+    DATA["MongoDB Data Store"]
+  end
+  CORE -->|"Context / Task"| AI
+  AI -->|"Enriched Result"| CORE
+  CORE -->|"Read / Write"| DATA
+  DATA -->|"State / Records"| CORE
+
+  subgraph EXT["Integration Layer"]
+    SERVICES["Model, Knowledge & Business APIs"]
+  end
+  CORE -->|"Validated Integration Call"| SERVICES
+  SERVICES -->|"Response / Event"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Contextual Response / Action"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+
+  OPS["Dockerized Runtime & Deployment"]
+  OPS -.->|"Runs & Connects"| CORE
+  OPS -.->|"Provisions"| DATA
+

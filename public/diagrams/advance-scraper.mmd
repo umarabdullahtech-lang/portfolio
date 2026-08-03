@@ -1,0 +1,28 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Automation Trigger / CLI"]
+    USER -->|"Targets / Collection Policy"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    API["Express Application API"]
+    CORE["Acquisition, Parsing & Enrichment"]
+    ENTRY -->|"Request"| API --> CORE
+  end
+
+  subgraph ID["Intelligence & Data Layer"]
+    DATA["Relational Data Store"]
+  end
+  CORE -->|"Read / Write"| DATA
+  DATA -->|"State / Records"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Structured Dataset"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+
+  OPS["Dockerized Runtime & Deployment"]
+  OPS -.->|"Runs & Connects"| CORE
+  OPS -.->|"Provisions"| DATA
+

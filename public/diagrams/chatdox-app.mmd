@@ -1,0 +1,27 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Next.js Web Interface"]
+    USER -->|"Message / Context"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    CORE["Conversation & Tool Orchestration"]
+    ENTRY -->|"Command / Event"| CORE
+  end
+
+  subgraph ID["Intelligence & Data Layer"]
+    AI["AI / Model Processing"]
+  end
+  CORE -->|"Context / Task"| AI
+  AI -->|"Enriched Result"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Contextual Response / Action"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+
+  OPS["Dockerized Runtime & Deployment"]
+  OPS -.->|"Runs & Connects"| CORE
+  OPS -.->|"Hosts / Configures"| AI
+

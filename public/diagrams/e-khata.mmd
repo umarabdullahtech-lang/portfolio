@@ -1,0 +1,24 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Application Entry Point"]
+    USER -->|"Financial Inputs / Rules"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    API["Express Application API"]
+    CORE["Validation & Calculation Engine"]
+    ENTRY -->|"Request"| API --> CORE
+  end
+
+  subgraph ID["Intelligence & Data Layer"]
+    DATA["Project Data Store"]
+  end
+  CORE -->|"Read / Write"| DATA
+  DATA -->|"State / Records"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Financial Record / Calculation"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

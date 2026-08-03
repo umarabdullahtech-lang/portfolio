@@ -1,0 +1,17 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Web Interface"]
+    USER -->|"Visitor Navigation / Intent"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    CORE["Content & Experience Delivery"]
+    ENTRY -->|"Command / Event"| CORE
+  end
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Project Discovery / Contact Action"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

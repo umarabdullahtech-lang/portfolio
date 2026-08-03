@@ -1,0 +1,30 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Next.js Web Interface"]
+    USER -->|"Referral / Conversion Event"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    API["Express Application API"]
+    CORE["Attribution & Commission Workflow"]
+    ENTRY -->|"Request"| API --> CORE
+  end
+
+  subgraph ID["Intelligence & Data Layer"]
+    DATA["Redis / Application State"]
+  end
+  CORE -->|"Read / Write"| DATA
+  DATA -->|"State / Records"| CORE
+
+  subgraph EXT["Integration Layer"]
+    SERVICES["Commerce & Analytics Platforms"]
+  end
+  CORE -->|"Validated Integration Call"| SERVICES
+  SERVICES -->|"Response / Event"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Tracked Conversion / Payout State"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

@@ -1,0 +1,24 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["React Web Interface"]
+    USER -->|"Audio / Realtime Event"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    API["Express Application API"]
+    CORE["Streaming Session Orchestration"]
+    ENTRY -->|"Request"| API --> CORE
+  end
+
+  subgraph EXT["Integration Layer"]
+    SERVICES["Realtime Model & Media Services"]
+  end
+  CORE -->|"Validated Integration Call"| SERVICES
+  SERVICES -->|"Response / Event"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Realtime Audio / Transcript"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

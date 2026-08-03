@@ -1,0 +1,29 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Application Entry Point"]
+    USER -->|"Input / Action"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    CORE["Domain & Workflow Logic"]
+    ENTRY -->|"Command / Event"| CORE
+  end
+
+  subgraph ID["Intelligence & Data Layer"]
+    AI["LangChain / Model Orchestration"]
+  end
+  CORE -->|"Context / Task"| AI
+  AI -->|"Enriched Result"| CORE
+
+  subgraph EXT["Integration Layer"]
+    SERVICES["External APIs & Platform Services"]
+  end
+  CORE -->|"Validated Integration Call"| SERVICES
+  SERVICES -->|"Response / Event"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Actionable Result / Automated Outcome"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

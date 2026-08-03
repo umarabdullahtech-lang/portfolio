@@ -5,12 +5,17 @@ import { requireAuth } from '@/lib/auth-middleware';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
+    const adminRequest = searchParams.get('admin') === '1';
+    if (adminRequest) {
+      const { error } = requireAuth(request);
+      if (error) return error;
+    }
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')));
+    const limit = Math.min(adminRequest ? 250 : 50, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const tag = searchParams.get('tag');
     const category = searchParams.get('category');
 
-    const where: Record<string, unknown> = { status: 'published' };
+    const where: Record<string, unknown> = adminRequest ? {} : { status: 'published' };
     if (tag) where.tags = { has: tag };
     if (category) where.category = category;
 

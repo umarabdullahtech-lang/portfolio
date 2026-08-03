@@ -1,0 +1,34 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Next.js Web Interface"]
+    USER -->|"Catalog / Customer Action"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    API["Application Service Layer"]
+    CORE["Commerce & Fulfillment Workflow"]
+    ENTRY -->|"Request"| API --> CORE
+  end
+
+  subgraph ID["Intelligence & Data Layer"]
+    DATA["Relational Data Store"]
+  end
+  CORE -->|"Read / Write"| DATA
+  DATA -->|"State / Records"| CORE
+
+  subgraph EXT["Integration Layer"]
+    SERVICES["Commerce, Payment & Messaging APIs"]
+  end
+  CORE -->|"Validated Integration Call"| SERVICES
+  SERVICES -->|"Response / Event"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Order / Listing Outcome"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+
+  OPS["Dockerized Runtime & Deployment"]
+  OPS -.->|"Runs & Connects"| CORE
+  OPS -.->|"Provisions"| DATA
+

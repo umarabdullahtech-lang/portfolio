@@ -1,6 +1,6 @@
 flowchart LR
-  ADMIN["WordPress Administrator"] --> SETTINGS["JorgeCastro Plugin Settings"]
-  SAAS["JorgeCastro SaaS"] --> HTTPS["HTTPS Request"]
+  ADMIN["WordPress Administrator"] --> SETTINGS["AI Publishing Plugin Settings"]
+  SAAS["AI SaaS Platform"] --> HTTPS["HTTPS Request"]
 
   subgraph TRUST["Connection + Trust Boundary"]
     SETTINGS --> CONNECT["Connect / Disconnect Lifecycle"]
@@ -12,7 +12,7 @@ flowchart LR
     AUTH -->|"constant-time key match or admin"| ROUTER
   end
 
-  subgraph API["Versioned REST Namespace: jorgecastro/v1"]
+  subgraph API["Versioned Plugin REST Namespace"]
     ROUTER["WordPress REST Router"]
     CONNECTION["Connection + Request Logs"]
     AUTHORS["Author Endpoints"]
@@ -66,7 +66,7 @@ flowchart LR
   end
 
   subgraph RECOVERY["REST Availability + Operations"]
-    OWN_NAMESPACE["Always Preserve JorgeCastro Namespace"]
+    OWN_NAMESPACE["Always Preserve Plugin Namespace"]
     BLOCKERS["Known Security / Optimization Blockers"]
     FORCE["Admin-Controlled REST Recovery"]
     LOG["Plugin Request Log"]
@@ -80,4 +80,3 @@ flowchart LR
   WOO --> RESPONSE
   POSTMETA --> RESPONSE
   RESPONSE --> SAAS
-

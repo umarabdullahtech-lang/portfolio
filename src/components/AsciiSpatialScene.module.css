@@ -1,0 +1,38 @@
+.root {
+  position: relative;
+  isolation: isolate;
+}
+
+.root > div {
+  position: relative;
+  z-index: 2;
+}
+
+.fallback {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  color: #d8ff3e;
+  font: 600 clamp(.34rem, .54vw, .52rem)/1.04 var(--font-mono), monospace;
+  letter-spacing: .015em;
+  opacity: .42;
+  text-align: center;
+  text-shadow: 0 0 16px rgba(216,255,62,.28);
+  transform: translate(-50%, -50%) perspective(700px) rotateX(8deg) rotateZ(-4deg);
+  transition: opacity 280ms ease;
+  white-space: pre;
+}
+
+.fallbackHidden {
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .fallback { font-size: .31rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fallback { transition: none; }
+}

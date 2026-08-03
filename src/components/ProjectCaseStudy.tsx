@@ -24,6 +24,7 @@ type Props = {
 
 export default function ProjectCaseStudy({ project, nextProject, settings }: Props) {
   const scope = useRef<HTMLDivElement>(null);
+  const isLive = Boolean(project.liveUrl && project.liveUrl !== "#");
 
   useGSAP(
     () => {
@@ -96,10 +97,10 @@ export default function ProjectCaseStudy({ project, nextProject, settings }: Pro
       <Navbar />
       <main id="main-content">
         <section className={styles.hero} data-case-hero>
-          <Link href="/work" className={styles.back}><ArrowLeft aria-hidden="true" /> Live case index</Link>
+          <Link href="/work" className={styles.back}><ArrowLeft aria-hidden="true" /> Project index</Link>
 
           <div className={styles.status}>
-            <span><Radio aria-hidden="true" /> Verified live</span>
+            <span><Radio aria-hidden="true" /> {isLive ? "Verified live" : "Source reviewed"}</span>
             <span>{project.category}</span>
             <span>{project.period}</span>
           </div>
@@ -115,7 +116,9 @@ export default function ProjectCaseStudy({ project, nextProject, settings }: Pro
               </h1>
               <p>{project.shortDescription}</p>
               <div className={styles.heroActions}>
-                <a href={project.liveUrl} target="_blank" rel="noreferrer">Open live product <ExternalLink aria-hidden="true" /></a>
+                {isLive && project.liveUrl && (
+                  <a href={project.liveUrl} target="_blank" rel="noreferrer">Open live product <ExternalLink aria-hidden="true" /></a>
+                )}
                 <Link href="#system-flow">Open full system flow <ArrowUpRight aria-hidden="true" /></Link>
               </div>
             </div>
@@ -137,7 +140,7 @@ export default function ProjectCaseStudy({ project, nextProject, settings }: Pro
             <div><dt>Engineering focus</dt><dd>{project.role}</dd></div>
             <div><dt>Domain</dt><dd>{project.category}</dd></div>
             <div><dt>Delivery window</dt><dd>{project.period}</dd></div>
-            <div><dt>System state</dt><dd>Verified live</dd></div>
+            <div><dt>System state</dt><dd>{isLive ? "Verified live" : "Source reviewed"}</dd></div>
           </dl>
           <div className={styles.proofRail} aria-label="Project evidence">
             {project.proof.map((proof) => (
@@ -252,15 +255,21 @@ export default function ProjectCaseStudy({ project, nextProject, settings }: Pro
             />
           </figure>
           <div>
-            <span>Deployment evidence</span>
-            <h2>This is running software.</h2>
-            <p>{project.verification}. The public link is provided as evidence, while protected product areas correctly remain behind authentication.</p>
-            <a href={project.liveUrl} target="_blank" rel="noreferrer">Open {project.title} <ExternalLink aria-hidden="true" /></a>
+            <span>{isLive ? "Deployment evidence" : "Source evidence"}</span>
+            <h2>{isLive ? "This is running software." : "The system is documented."}</h2>
+            <p>
+              {project.verification}. {isLive
+                ? "The public link is provided as evidence, while protected product areas correctly remain behind authentication."
+                : "Its reviewed architecture and functional flow remain available without presenting an unverified public deployment."}
+            </p>
+            {isLive && project.liveUrl && (
+              <a href={project.liveUrl} target="_blank" rel="noreferrer">Open {project.title} <ExternalLink aria-hidden="true" /></a>
+            )}
           </div>
         </section>
 
         <section className={styles.nextCase}>
-          <p>Continue through the live work</p>
+          <p>Continue through the project archive</p>
           <Link href={`/work/${nextProject.slug}`}>
             <span>Next case</span>
             <strong>{nextProject.title}</strong>

@@ -1,0 +1,24 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Automation Trigger / CLI"]
+    USER -->|"Input / Action"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    API["Application Service Layer"]
+    CORE["Domain & Workflow Logic"]
+    ENTRY -->|"Request"| API --> CORE
+  end
+
+  subgraph EXT["Integration Layer"]
+    SERVICES["External APIs & Platform Services"]
+  end
+  CORE -->|"Validated Integration Call"| SERVICES
+  SERVICES -->|"Response / Event"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Actionable Result / Automated Outcome"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

@@ -1,0 +1,23 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Automation Trigger / CLI"]
+    USER -->|"Media URL / Processing Options"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    CORE["Media Acquisition & Transformation"]
+    ENTRY -->|"Command / Event"| CORE
+  end
+
+  subgraph EXT["Integration Layer"]
+    SERVICES["Media & Transcription Services"]
+  end
+  CORE -->|"Validated Integration Call"| SERVICES
+  SERVICES -->|"Response / Event"| CORE
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Media Asset / Transcript"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

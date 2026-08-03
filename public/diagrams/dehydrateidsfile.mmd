@@ -1,0 +1,17 @@
+flowchart LR
+  subgraph EXP["Experience Layer"]
+    USER["User / Operator"]
+    ENTRY["Automation Trigger / CLI"]
+    USER -->|"Input / Action"| ENTRY
+  end
+
+  subgraph APP["Application Layer"]
+    CORE["Domain & Workflow Logic"]
+    ENTRY -->|"Command / Event"| CORE
+  end
+
+  subgraph OUT["Outcome Layer"]
+    RESULT["Actionable Result / Automated Outcome"]
+  end
+  CORE -->|"Processed Output"| RESULT --> USER
+

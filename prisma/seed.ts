@@ -3,6 +3,7 @@ import { PrismaClient } from '../src/generated/prisma/client.js';
 import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcryptjs';
 import { portfolioProjects } from '../src/data/projects.js';
+import { projectToRecord } from '../src/lib/project-record.js';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -248,23 +249,14 @@ These patterns help create APIs that are not just functional, but truly type-saf
   await prisma.project.deleteMany({ where: { title: { in: placeholderTitles } } });
 
   for (const project of portfolioProjects) {
-    const data = {
-      title: project.title,
-      description: project.description,
-      techStack: project.techStack,
-      liveUrl: project.liveUrl,
-      githubUrl: project.githubUrl,
-      image: project.image,
-      featured: project.featured,
-      sortOrder: project.sortOrder,
-    };
+    const data = projectToRecord(project);
     await prisma.project.upsert({
       where: { id: project.id },
       update: data,
       create: { id: project.id, ...data },
     });
   }
-  console.log(`${portfolioProjects.length} live projects synchronized`);
+  console.log(`${portfolioProjects.length} portfolio projects synchronized`);
 
   // Experiences
   const experiences = [
