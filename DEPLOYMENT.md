@@ -4,7 +4,7 @@
 
 | Environment | URL | Host |
 |-------------|-----|------|
-| Production | https://umar-abdullah.com | Azure Linux (this server) |
+| Production | https://umar-abdullah.com | Azure VM `portfolio-vm` (resource group `portfolio-rg`, 20.204.138.40). App in `/srv/portfolio/app`, run by `portfolio.service` as user `portfolio` on 127.0.0.1:3000 behind nginx. The VM also hosts AM PUMPS (`am-pumps-frontend.service`, ports 3001/5000). |
 | Local dev | http://localhost:3000 | Developer machine |
 
 ## Prerequisites
@@ -90,104 +90,97 @@ sudo systemctl restart portfolio.service
 
 ## Deployment Process
 
-### Build and deploy to production (manual)
+Every deploy, automatic or manual, runs the same root-owned script on the VM:
+`/usr/local/sbin/portfolio-deploy` (source: `scripts/server/portfolio-deploy.sh`). It:
+
+1. Copies the live app to `/srv/portfolio/app-next` and pulls `main` there (the live site keeps serving).
+2. Stops early if `main` is already live (`FORCE=1` rebuilds anyway).
+3. Runs `npm ci` and `npm run build` in the copy.
+4. Backs up the database to `/srv/portfolio/backups/` (newest 30 kept), then runs `npx prisma migrate deploy`.
+5. Swaps folders (`app` → `app-prev`, `app-next` → `app`) and restarts `portfolio.service`.
+6. Health-checks `http://127.0.0.1:3000/api/health` and restores `app-prev` automatically if it fails.
+
+Migrations run before the swap, so they must stay compatible with the previous build.
+Each step is logged to `/var/log/portfolio-deploy.log`.
+
+### Deploy by hand
 
 ```bash
-# On the production server
-cd /home/openclaw-assistant-jorge_user/projects/portfolio
-
-# Pull latest changes
-git pull origin main
-
-# Install any new dependencies
-npm ci --production=false
-
-# Build for production
-npm run build
-
-# Restart the service
-sudo systemctl restart portfolio.service
-
-# Verify health
-curl -s http://localhost:3001/api/health
+ssh azureuser@20.204.138.40
+sudo /usr/local/sbin/portfolio-deploy
+# or rebuild the current commit:
+sudo FORCE=1 /usr/local/sbin/portfolio-deploy
 ```
 
-### Deployment checklist
-
-- [ ] `npm run build` completes without errors
-- [ ] `.env` has all required variables set
-- [ ] Database migrations applied (`npx prisma migrate deploy`)
-- [ ] Service starts healthy (`sudo systemctl status portfolio.service`)
-- [ ] Health endpoint returns 200 (`curl http://localhost:3001/api/health`)
-- [ ] nginx config valid (`sudo nginx -t`)
+To change the script, edit `scripts/server/portfolio-deploy.sh` and reinstall it:
+`sudo install -o root -g root -m 755 portfolio-deploy.sh /usr/local/sbin/portfolio-deploy`.
 
 ## Rollback Procedures
 
-### Automatic rollback (CI/CD pipeline)
-
-The deploy pipeline rolls back automatically in two scenarios:
+### Automatic rollback
 
 | Scenario | What happens |
 |----------|-------------|
-| `npm run build` fails (pre-restart) | Workspace is reset to the previous commit (`git checkout <prev>` + `npm ci`). The service is **never restarted**, so old code keeps running. |
-| Health check fails after service restart | Full rollback: `git checkout <prev>` + `npm ci` + `npm run build` + `systemctl restart`. Service is restored to the last good commit. |
+| Pull, install, build, backup, or migration fails | The deploy stops before the swap. The live site is untouched. |
+| Health check fails after the restart | The previous build in `/srv/portfolio/app-prev` is moved back and the service restarted. The failed build is kept as `/srv/portfolio/app-failed-<commit>`. |
 
-All rollback events are logged with a `ROLLBACK TRIGGERED` / `ROLLBACK COMPLETE` timestamp line to:
-```
-~/logs/deploy.log
-```
-
-A GitHub Issue labeled `deploy-failure` is also created with a link to the Actions run.
+A failed GitHub Actions run also opens an issue labeled `deploy-failure` with a link to the run.
+Database migrations are not reversed automatically; restore from the backup taken just before them.
 
 ### Manual rollback
 
 ```bash
-# Rollback to previous git commit
-git log --oneline -5  # find the target commit
-git checkout <commit-hash>
-npm ci --production=false
-npm run build
+# Return to the previous build (kept after every successful deploy)
+sudo mv /srv/portfolio/app /srv/portfolio/app-rolled-back
+sudo mv /srv/portfolio/app-prev /srv/portfolio/app
 sudo systemctl restart portfolio.service
 ```
 
 For database rollback:
 
 ```bash
-# Restore from latest backup
-gunzip -c /home/openclaw-assistant-jorge_user/backups/portfolio-db/portfolio_umar_YYYYMMDD_HHMMSS.sql.gz \
-  | sudo -u postgres psql -d portfolio_umar
+# Restore a pre-deploy backup (custom format, made with pg_dump -Fc)
+sudo ls -lt /srv/portfolio/backups/
+sudo cat /srv/portfolio/backups/<file>.dump | sudo -u postgres pg_restore --clean --if-exists -d portfolio
 ```
 
 ## CI/CD Pipeline
 
 Automated via GitHub Actions (`.github/workflows/deploy.yml`).
 
-### Pipeline stages (on push to `main`)
+### Pipeline stages (on push to `main`, or run manually from the Actions tab)
 
-| # | Stage | Tool |
+| # | Stage | What runs |
 |---|-------|------|
-| 1 | Checkout | `actions/checkout@v4` |
-| 2 | Install deps | `npm ci` |
-| 3 | Lint | `npm run lint` |
-| 4 | Build | `npm run build` |
-| 5 | SSH deploy | `appleboy/ssh-action` |
-| 6 | DB migrations | `npx prisma migrate deploy` (on server) |
-| 7 | Restart service | `sudo systemctl restart portfolio.service` |
-| 8 | Health check | `curl http://localhost:3001/api/health` (6 retries) |
-| 9 | Rollback (build failure) | Workspace reset to previous commit; service not restarted |
-| 9 | Rollback (health failure) | Full rollback: `git checkout` + `npm ci` + `npm run build` + `systemctl restart` |
-| 10 | Failure notification | GitHub Issue created with run link; rollback event logged to `~/logs/deploy.log` |
+| 1 | Checkout, install, lint, build | `npm ci`, `npm run lint`, `npm run build` on the runner (a check only) |
+| 2 | Deploy | `ssh portfolio-deploy@20.204.138.40` with strict host-key checking |
+| 3 | On the server | `/usr/local/sbin/portfolio-deploy` (see Deployment Process) |
+| 4 | On failure | GitHub Issue labeled `deploy-failure` with the run link |
 
-### Required GitHub Secrets
+Deploys never overlap: the workflow uses a `production-deploy` concurrency group and the
+script holds a lock.
 
-| Secret | Description |
+### Deploy identity on the VM
+
+- User `portfolio-deploy`, created only for deploys.
+- Its key in `/home/portfolio-deploy/.ssh/authorized_keys` is marked
+  `restrict,command="sudo /usr/local/sbin/portfolio-deploy"`, so whatever a client asks for,
+  it can only run the deploy script: no shell, no forwarding.
+- `/etc/sudoers.d/portfolio-deploy` allows that one script as root, with no arguments.
+
+To rotate the key: generate a new ed25519 pair, replace the key in `authorized_keys`
+(keep the `restrict,command=...` prefix), and update the `PROD_SSH_PRIVATE_KEY` secret.
+
+### GitHub Secrets
+
+| Secret | Value |
 |--------|-------------|
-| `PROD_SSH_HOST` | Production server hostname or IP |
-| `PROD_SSH_USER` | SSH username (e.g. `openclaw-assistant-jorge_user`) |
-| `PROD_SSH_PRIVATE_KEY` | Private key that matches a key in `~/.ssh/authorized_keys` on server |
-| `PROD_SSH_PORT` | SSH port (defaults to 22 if not set) |
-| `DATABASE_URL` | PostgreSQL connection string (used at build time) |
-| `JWT_SECRET` | JWT signing secret (used at build time) |
+| `PROD_SSH_HOST` | `20.204.138.40` |
+| `PROD_SSH_USER` | `portfolio-deploy` |
+| `PROD_SSH_PRIVATE_KEY` | Private half of the deploy key (exists only in GitHub) |
+| `PROD_SSH_KNOWN_HOSTS` | `ssh-keyscan -t ed25519 20.204.138.40` output; fingerprint `SHA256:yVVO+MAEWvQCQLthVmJb8p4881m5opC+9zvxNscISpU` |
+| `PROD_SSH_PORT` | Optional, defaults to 22 |
+| `JWT_SECRET` | Any random value. It only lets the runner's check build load the auth module; the server uses its own `.env`. |
 
 ### Pipeline logs
 
@@ -218,28 +211,25 @@ curl -s https://umar-abdullah.com/api/health
 # Expected: {"status":"ok","db":"ok"}
 ```
 
-### Database backup status
+### Deploy log
 ```bash
-cat /home/openclaw-assistant-jorge_user/backups/portfolio-db/backup.log
-ls -lh /home/openclaw-assistant-jorge_user/backups/portfolio-db/
+sudo tail -50 /var/log/portfolio-deploy.log
 ```
 
 ## Database Backups
 
-- **Schedule:** Daily at 02:00 UTC via `portfolio-backup.timer` (systemd)
-- **Location:** `/home/openclaw-assistant-jorge_user/backups/portfolio-db/`
-- **Retention:** 30 days
-- **Format:** gzipped SQL dump (`.sql.gz`)
+- **When:** before every deploy, by the deploy script. There is no daily backup timer on
+  `portfolio-vm`, so data changed between deploys (contact messages, /admin edits) is not
+  backed up until the next deploy.
+- **Location:** `/srv/portfolio/backups/` (root-only), newest 30 kept
+- **Format:** PostgreSQL custom format (`pg_dump -Fc`)
 
 ```bash
-# Check timer status
-sudo systemctl list-timers portfolio-backup.timer
+# Take a backup now
+sudo sh -c 'sudo -u postgres pg_dump -Fc portfolio > /srv/portfolio/backups/portfolio-manual-$(date -u +%Y%m%dT%H%M%SZ).dump'
 
-# Run backup manually
-/home/openclaw-assistant-jorge_user/backups/portfolio-db-backup.sh
-
-# View backup log
-cat /home/openclaw-assistant-jorge_user/backups/portfolio-db/backup.log
+# List backups
+sudo ls -lh /srv/portfolio/backups/
 ```
 
 ## Troubleshooting
@@ -250,7 +240,7 @@ cat /home/openclaw-assistant-jorge_user/backups/portfolio-db/backup.log
 sudo journalctl -u portfolio.service -n 50
 # Common causes:
 # - Missing or malformed .env
-# - Port 3001 already in use: lsof -i :3001
+# - Port 3000 already in use: sudo ss -ltnp | grep :3000
 # - Database unreachable: pg_isready -h 127.0.0.1 -p 5432
 ```
 
@@ -261,7 +251,7 @@ sudo journalctl -u portfolio.service -n 50
 sudo systemctl status postgresql.service
 
 # Test TCP connection (app uses TCP, not socket)
-PGPASSWORD="<db-password>" psql -h 127.0.0.1 -U postgres -d portfolio_umar -c "SELECT 1;"
+sudo -u postgres psql -d portfolio -c "SELECT 1;"
 
 # Check pg_hba.conf allows TCP access
 sudo cat /etc/postgresql/*/main/pg_hba.conf
@@ -271,7 +261,7 @@ sudo cat /etc/postgresql/*/main/pg_hba.conf
 
 ```bash
 # Check the app is running
-curl -s http://127.0.0.1:3001/api/health
+curl -s http://127.0.0.1:3000/api/health
 
 # Check nginx config
 sudo nginx -t
