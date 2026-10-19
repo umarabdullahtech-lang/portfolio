@@ -25,6 +25,9 @@ type Props = {
 export default function ProjectCaseStudy({ project, nextProject, settings }: Props) {
   const scope = useRef<HTMLDivElement>(null);
   const isLive = Boolean(project.liveUrl && project.liveUrl !== "#");
+  // Open-source studies document upstream work, so they never claim "verified live" authorship.
+  const isReference = project.category === "Open-source Reference";
+  const systemState = isReference ? "Open-source study" : isLive ? "Verified live" : "Source reviewed";
 
   useGSAP(
     () => {
@@ -97,10 +100,10 @@ export default function ProjectCaseStudy({ project, nextProject, settings }: Pro
       <Navbar />
       <main id="main-content">
         <section className={styles.hero} data-case-hero>
-          <Link href="/work" className={styles.back}><ArrowLeft aria-hidden="true" /> Project index</Link>
+          <Link href="/work" className={styles.back}><ArrowLeft aria-hidden="true" /> All work</Link>
 
           <div className={styles.status}>
-            <span><Radio aria-hidden="true" /> {isLive ? "Verified live" : "Source reviewed"}</span>
+            <span><Radio aria-hidden="true" /> {systemState}</span>
             <span>{project.category}</span>
             <span>{project.period}</span>
           </div>
@@ -140,9 +143,9 @@ export default function ProjectCaseStudy({ project, nextProject, settings }: Pro
             <div><dt>Engineering focus</dt><dd>{project.role}</dd></div>
             <div><dt>Domain</dt><dd>{project.category}</dd></div>
             <div><dt>Delivery window</dt><dd>{project.period}</dd></div>
-            <div><dt>System state</dt><dd>{isLive ? "Verified live" : "Source reviewed"}</dd></div>
+            <div><dt>System state</dt><dd>{systemState}</dd></div>
           </dl>
-          <div className={styles.proofRail} aria-label="Project evidence">
+          <div className={styles.proofRail} role="group" aria-label="Project evidence">
             {project.proof.map((proof) => (
               <div key={`${proof.value}-${proof.label}`}>
                 <strong>{proof.value}</strong>
@@ -255,8 +258,8 @@ export default function ProjectCaseStudy({ project, nextProject, settings }: Pro
             />
           </figure>
           <div>
-            <span>{isLive ? "Deployment evidence" : "Source evidence"}</span>
-            <h2>{isLive ? "This is running software." : "The system is documented."}</h2>
+            <span>{isReference ? "Upstream evidence" : isLive ? "Deployment evidence" : "Source evidence"}</span>
+            <h2>{isReference ? "This is the upstream project." : isLive ? "This is running software." : "The system is documented."}</h2>
             <p>
               {project.verification}. {isLive
                 ? "The public link is provided as evidence, while protected product areas correctly remain behind authentication."

@@ -33,12 +33,12 @@
   font-size: clamp(3rem, 7vw, 7.5rem);
   font-weight: 750;
   line-height: 0.84;
-  letter-spacing: -0.075em;
+  letter-spacing: -0.045em;
   text-decoration: none;
   transition: color 450ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.callout a:hover { color: #d8ff3e; }
+@media (hover: hover) { .callout a:hover { color: #d8ff3e; } }
 .callout svg { width: 0.65em; height: 0.65em; flex: 0 0 auto; }
 
 .grid {
@@ -53,8 +53,8 @@
 .socials > span {
   display: block;
   margin-bottom: 1.4rem;
-  color: #747984;
-  font: 500 0.56rem/1 var(--font-mono), monospace;
+  color: var(--muted);
+  font: 500 var(--text-label)/1 var(--font-mono), monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -68,12 +68,12 @@
   align-items: center;
   gap: 0.55rem;
   color: #c6c9d0;
-  font: 550 0.66rem/1.4 var(--font-mono), monospace;
+  font: 550 var(--text-control)/1.4 var(--font-mono), monospace;
   text-decoration: none;
   text-transform: uppercase;
   transition: color 300ms;
 }
-.grid nav a:hover, .socials a:hover { color: #d8ff3e; }
+@media (hover: hover) { .grid nav a:hover, .socials a:hover { color: #d8ff3e; } }
 .socials svg { width: 0.9rem; height: 0.9rem; }
 
 .legal {
@@ -82,14 +82,14 @@
   gap: 1rem;
   padding-top: 1.3rem;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
-  color: #666b75;
-  font: 500 0.54rem/1.4 var(--font-mono), monospace;
+  color: var(--muted);
+  font: 500 var(--text-label)/1.4 var(--font-mono), monospace;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 .legal p { margin: 0; }
 .legal p:nth-child(2) { text-align: center; }
-.legal a { color: #9297a2; text-align: right; text-decoration: none; }
+.legal a { color: #a9aeb8; text-align: right; text-decoration: none; }
 
 @media (max-width: 800px) {
   .callout, .grid { grid-template-columns: 1fr; }

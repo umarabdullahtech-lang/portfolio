@@ -17,7 +17,7 @@ import {
 import type { PortfolioProject, ProjectArchitectureStage } from "@/data/projects";
 
 type EditableProject = Omit<PortfolioProject, "id"> & { id?: string };
-type Filter = "all" | "live" | "documented" | "featured";
+type Filter = "all" | "live" | "documented" | "featured" | "hidden";
 
 const inputClass = "w-full rounded-lg border border-white/10 bg-white/[0.025] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-[#d8ff3e]/55";
 const labelClass = "mb-1.5 block text-[11px] font-medium uppercase tracking-[0.1em] text-slate-500";
@@ -39,6 +39,7 @@ function newProject(sortOrder: number): EditableProject {
     image: "/projects/project-system.svg",
     imageAlt: "",
     featured: false,
+    published: true,
     sortOrder,
     techStack: [],
     proof: [],
@@ -103,7 +104,8 @@ export default function ProjectManager() {
       const matchesFilter = filter === "all"
         || (filter === "live" && Boolean(project.liveUrl))
         || (filter === "documented" && !project.liveUrl)
-        || (filter === "featured" && project.featured);
+        || (filter === "featured" && project.featured)
+        || (filter === "hidden" && !project.published);
       return matchesSearch && matchesFilter;
     });
   }, [filter, projects, query]);
@@ -187,7 +189,7 @@ export default function ProjectManager() {
           {query && <button type="button" onClick={() => setQuery("")} aria-label="Clear search" className="text-slate-500 hover:text-white"><X size={15} /></button>}
         </label>
         <div className="flex flex-wrap gap-1 rounded-lg border border-white/10 p-1">
-          {(["all", "live", "documented", "featured"] as Filter[]).map((value) => (
+          {(["all", "live", "documented", "featured", "hidden"] as Filter[]).map((value) => (
             <button key={value} type="button" onClick={() => setFilter(value)} className={`rounded-md px-3 py-2 font-mono text-[10px] uppercase tracking-[0.08em] transition ${filter === value ? "bg-white/10 text-white" : "text-slate-500 hover:text-white"}`}>
               {value}
             </button>
@@ -196,7 +198,7 @@ export default function ProjectManager() {
       </div>
 
       {error && <p role="alert" className="mb-4 rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
-      {saved && <p role="status" className="mb-4 flex items-center gap-2 rounded-lg border border-[#d8ff3e]/25 bg-[#d8ff3e]/[0.06] px-4 py-3 text-sm text-[#e8ff94]"><Check size={15} /> Project saved and published.</p>}
+      {saved && <p role="status" className="mb-4 flex items-center gap-2 rounded-lg border border-[#d8ff3e]/25 bg-[#d8ff3e]/[0.06] px-4 py-3 text-sm text-[#e8ff94]"><Check size={15} /> Project saved.</p>}
 
       {loading ? (
         <div className="flex min-h-64 items-center justify-center text-slate-500"><LoaderCircle className="animate-spin" /></div>
@@ -209,7 +211,7 @@ export default function ProjectManager() {
             <article key={project.id} className="grid grid-cols-1 items-center gap-3 border-b border-white/[0.07] px-4 py-4 last:border-b-0 hover:bg-white/[0.018] lg:grid-cols-[72px_minmax(220px,1.2fr)_minmax(130px,.6fr)_90px_112px] lg:gap-4">
               <span className="font-mono text-xs text-slate-600">{String(project.sortOrder).padStart(3, "0")}</span>
               <div className="min-w-0">
-                <h2 className="truncate font-medium text-white">{project.title}</h2>
+                <h2 className="truncate font-medium text-white">{project.title}{!project.published && <span className="ml-2 rounded border border-white/15 px-1.5 py-0.5 align-middle font-mono text-[10px] uppercase tracking-[0.08em] text-slate-400">Hidden</span>}</h2>
                 <p className="mt-1 truncate font-mono text-[10px] text-slate-600">/work/{project.slug}</p>
               </div>
               <span className="truncate text-xs text-slate-400">{project.category}</span>
@@ -284,6 +286,7 @@ function ProjectForm({ project, saving, error, onSave, onCancel }: {
             <Field label="Sort order"><input type="number" value={form.sortOrder} onChange={(event) => update("sortOrder", Number(event.target.value))} className={inputClass} /></Field>
           </div>
           <label className="mt-4 flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" checked={form.featured} onChange={(event) => update("featured", event.target.checked)} /> Feature this project on the home page</label>
+          <label className="mt-3 flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" checked={form.published} onChange={(event) => update("published", event.target.checked)} /> Show this project in the public archive</label>
         </section>
 
         <section className={panelClass}>

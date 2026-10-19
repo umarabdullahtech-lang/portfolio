@@ -267,59 +267,8 @@ These patterns help create APIs that are not just functional, but truly type-saf
   }
   console.log(`${portfolioProjects.length} portfolio projects synchronized`);
 
-  // Experiences
-  const experiences = [
-    {
-      company: 'TechCorp Inc.',
-      role: 'Senior AI Engineer',
-      period: '2023 - Present',
-      description: 'Architected and deployed multi-agent AI systems handling 10K+ daily conversations. Built custom RAG pipelines reducing support ticket volume by 40%. Led a team of 4 engineers building LLM-powered product features.',
-      location: 'Remote',
-      type: 'work',
-      current: true,
-      sortOrder: 1,
-    },
-    {
-      company: 'StartupXYZ',
-      role: 'Senior Full-Stack Engineer',
-      period: '2021 - 2023',
-      description: 'Built and scaled a multi-tenant SaaS platform from 0 to 50K monthly active users. Designed microservices architecture with Node.js, PostgreSQL, and Redis. Implemented Stripe billing, automated onboarding, and real-time dashboards.',
-      location: 'Remote',
-      type: 'work',
-      current: false,
-      sortOrder: 2,
-    },
-    {
-      company: 'Digital Agency Co.',
-      role: 'Software Engineer',
-      period: '2019 - 2021',
-      description: 'Delivered 15+ client projects across web scraping, automation, and web apps. Built Puppeteer-based scraping infrastructure processing 200K pages/day. Developed RESTful APIs and integrated third-party services.',
-      location: 'On-site',
-      type: 'work',
-      current: false,
-      sortOrder: 3,
-    },
-    {
-      company: 'University of Technology',
-      role: 'B.Sc. Computer Science',
-      period: '2015 - 2019',
-      description: 'Graduated with honors, specializing in Software Engineering. Capstone project: AI-powered plagiarism detection system. Active member of the Computer Science Society.',
-      location: 'On-campus',
-      type: 'education',
-      current: false,
-      sortOrder: 4,
-    },
-  ];
-
-  for (const exp of experiences) {
-    const existing = await prisma.experience.findFirst({ where: { company: exp.company, role: exp.role } });
-    if (!existing) {
-      await prisma.experience.create({ data: exp });
-    } else {
-      await prisma.experience.update({ where: { id: existing.id }, data: exp });
-    }
-  }
-  console.log(`${experiences.length} experiences created`);
+  // Experiences: career history is entered in /admin. The seed no longer inserts
+  // sample roles, because they rendered on the public site as if they were real.
 
   // Skills
   const skills = [
@@ -353,7 +302,8 @@ These patterns help create APIs that are not just functional, but truly type-saf
   }
   console.log(`${skills.length} skills created`);
 
-  // Site Settings
+  // Site Settings: created once and then owned by /admin, so re-running the seed
+  // never overwrites edited values. contact_email is set in /admin.
   const settings = [
     { key: 'hero_name', value: 'Umar Abdullah' },
     { key: 'hero_title', value: 'Senior Software Engineer & AI Engineer' },
@@ -375,7 +325,6 @@ These patterns help create APIs that are not just functional, but truly type-saf
     { key: 'stat_ai_label', value: 'AI Systems Built' },
     { key: 'stat_satisfaction', value: '99%' },
     { key: 'stat_satisfaction_label', value: 'Client Satisfaction' },
-    { key: 'contact_email', value: 'umar@example.com' },
     { key: 'social_github', value: 'https://github.com/umarabdullahtech' },
     { key: 'social_linkedin', value: 'https://linkedin.com/in/umarabdullahtech' },
     { key: 'footer_tagline', value: 'Senior Software Engineer & AI Engineer. Building the future with code and AI.' },
@@ -385,7 +334,7 @@ These patterns help create APIs that are not just functional, but truly type-saf
   for (const setting of settings) {
     await prisma.siteSetting.upsert({
       where: { key: setting.key },
-      update: { value: setting.value },
+      update: {},
       create: setting,
     });
   }

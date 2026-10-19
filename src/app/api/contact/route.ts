@@ -12,13 +12,19 @@ function getClientIp(request: Request): string {
   return '127.0.0.1';
 }
 
+// `field` names the input the message belongs to, so the form can show it in place.
+function invalid(field: 'name' | 'email' | 'subject' | 'message', error: string) {
+  return NextResponse.json({ error, field }, { status: 400 });
+}
+
 export async function POST(request: Request) {
   const ip = getClientIp(request);
   const rateLimit = checkRateLimit(`contact:${ip}`, CONTACT_RATE_LIMIT);
 
   if (!rateLimit.allowed) {
+    const minutes = Math.max(1, Math.ceil(rateLimit.retryAfterSeconds / 60));
     return NextResponse.json(
-      { error: 'Too many submissions. Please try again later.' },
+      { error: `Too many messages from this connection. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}.` },
       { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } },
     );
   }
@@ -27,24 +33,24 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, email, subject, message } = body;
 
-    if (!name || !email || !message) {
-      return NextResponse.json({ error: 'Name, email, and message are required' }, { status: 400 });
-    }
+    if (!name) return invalid('name', 'Enter your name');
+    if (!email) return invalid('email', 'Enter your email address');
+    if (!message) return invalid('message', 'Enter a message');
 
     if (typeof name !== 'string' || name.length > 200) {
-      return NextResponse.json({ error: 'Name must be 200 characters or less' }, { status: 400 });
+      return invalid('name', 'Use a name of 200 characters or fewer');
     }
 
     if (typeof email !== 'string' || !EMAIL_REGEX.test(email) || email.length > 254) {
-      return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
+      return invalid('email', 'Enter an email address like name@company.com');
     }
 
     if (subject !== undefined && subject !== null && (typeof subject !== 'string' || subject.length > 500)) {
-      return NextResponse.json({ error: 'Subject must be 500 characters or less' }, { status: 400 });
+      return invalid('subject', 'Keep the subject to 500 characters or fewer');
     }
 
     if (typeof message !== 'string' || message.length > 5000) {
-      return NextResponse.json({ error: 'Message must be 5000 characters or less' }, { status: 400 });
+      return invalid('message', 'Keep the message to 5,000 characters or fewer');
     }
 
     const submission = await createContactSubmission({

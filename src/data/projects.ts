@@ -28,6 +28,7 @@ export type PortfolioProject = {
   image: string;
   imageAlt: string;
   featured: boolean;
+  published: boolean;
   sortOrder: number;
   techStack: string[];
   proof: Array<{ value: string; label: string }>;
@@ -40,7 +41,7 @@ export type PortfolioProject = {
   verification: string;
 };
 
-const curatedPortfolioProjects: PortfolioProject[] = [
+const curatedPortfolioProjects: Omit<PortfolioProject, "published">[] = [
   {
     id: "jhb-property",
     slug: "jhb-property-intelligence",
@@ -944,6 +945,46 @@ export const BRAND_NEUTRAL_PROJECT_IDS = [
   "jorge-whitelabel",
 ] as const;
 
+// Generated entries kept out of the public archive: placeholders and practice repos,
+// duplicate copies, and upstream open-source code that is not original work. They stay
+// in the CMS unpublished (see the project_archive_curation migration) and can be
+// re-published from /admin.
+export const ARCHIVE_HIDDEN_PROJECT_IDS = new Set([
+  "sample",
+  "react-practice",
+  "test-mautic",
+  "template-boiler-plate",
+  "comingsoonsite",
+  "prompt-testing",
+  "prompts",
+  "python",
+  "chiari-malformations",
+  "cerebralbiz-01",
+  "nick-chatbot",
+  "sanitary-test",
+  "realtime-console",
+  "devika",
+  "realtime",
+  "openai-realtime-api-beta-main",
+  "promptfoo",
+  "mautic",
+  "usama-portfolio",
+  "voice-assitant",
+  "ydlk-core",
+  "new-ytdlcore",
+  "whatsapp-backup-downloader",
+  "listmonk-apis",
+]);
+
+// Titles generated from folder names with typos or ambiguous wording.
+const catalogTitleFixes: Record<string, string> = {
+  "linkedin-scrapper": "LinkedIn Scraper",
+  "chatwebby-without-werbite": "Chatwebby Without Website",
+  shipgpt: "ShipGPT Website",
+  "new-folder-2": "ShipGPT",
+  "openclaw-guru-automatino-project-testing": "SiteAudit",
+};
+
 const projectIdentityOverrides: Partial<Record<(typeof BRAND_NEUTRAL_PROJECT_IDS)[number], { title: string; description?: string }>> = {
   "jorge-gpt": {
     title: "Multi-Model LLM Gateway",
@@ -1026,7 +1067,9 @@ function createCatalogProject(project: CatalogProject, sortOrder: number): Portf
   const isLive = project.liveUrlStatus === "verified-live" && Boolean(project.liveUrl);
   const architecture = project.architecture;
   const identity = projectIdentityOverrides[project.id as (typeof BRAND_NEUTRAL_PROJECT_IDS)[number]];
-  const title = identity?.title || project.title;
+  const title = identity?.title || catalogTitleFixes[project.id] || project.title;
+  const hasRepository = project.repositoryCount > 0 || Boolean(project.primaryRepository);
+  const capabilities = generatedCapabilities(project);
   const description = identity?.description || project.description;
 
   return {
@@ -1047,11 +1090,16 @@ function createCatalogProject(project: CatalogProject, sortOrder: number): Portf
       ? `${title} live product interface`
       : `${title} system architecture cover`,
     featured: false,
+    published: !ARCHIVE_HIDDEN_PROJECT_IDS.has(project.id),
     sortOrder,
     techStack,
     proof: [
-      { value: String(Math.max(project.repositoryCount, project.primaryRepository ? 1 : 0)), label: "source repositories indexed" },
-      { value: String(architecture.packageCount), label: "application packages detected" },
+      hasRepository
+        ? { value: String(Math.max(project.repositoryCount, 1)), label: "source repositories indexed" }
+        : { value: "Local", label: "source folder reviewed, no public repository" },
+      architecture.packageCount > 0
+        ? { value: String(architecture.packageCount), label: "application packages detected" }
+        : { value: String(capabilities.length), label: "capabilities documented" },
       { value: String(techStack.length), label: "core technologies mapped" },
     ],
     challenge: `${description} The engineering challenge is to turn that scope into a legible system with explicit inputs, dependable workflow boundaries, and an outcome that can be inspected and maintained.`,
@@ -1059,7 +1107,7 @@ function createCatalogProject(project: CatalogProject, sortOrder: number): Portf
     outcome: isLive
       ? `${title} is represented by a verified public deployment and a reviewed source inventory. The case study keeps the implementation path visible without inventing unsupported performance claims.`
       : `${title} is included as documented engineering work. Its source structure, technology stack, and functional flow are presented here even though no verified public deployment is currently available.`,
-    capabilities: generatedCapabilities(project),
+    capabilities,
     architecture: [
       {
         label: "Input",
@@ -1107,7 +1155,7 @@ const generatedPortfolioProjects = projectCatalog
   .map((project, index) => createCatalogProject(project, curatedPortfolioProjects.length + index + 1));
 
 export const portfolioProjects: PortfolioProject[] = [
-  ...curatedPortfolioProjects,
+  ...curatedPortfolioProjects.map((project) => ({ ...project, published: true })),
   ...generatedPortfolioProjects,
 ];
 

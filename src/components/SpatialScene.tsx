@@ -18,6 +18,22 @@ function useReducedMotion() {
   return reduced;
 }
 
+// Off-screen canvases stop rendering continuously; R3F draws again when they return.
+function useInView<T extends Element>() {
+  const ref = useRef<T>(null);
+  const [inView, setInView] = useState(true);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  return [ref, inView] as const;
+}
+
 function SpatialCore({ reduced }: { reduced: boolean }) {
   const assembly = useRef<THREE.Group>(null);
   const innerCore = useRef<THREE.Mesh>(null);
@@ -105,19 +121,22 @@ function SpatialCore({ reduced }: { reduced: boolean }) {
 
 export default function SpatialScene() {
   const reduced = useReducedMotion();
+  const [container, inView] = useInView<HTMLDivElement>();
 
   return (
-    <Canvas
-      camera={{ position: [0, 0, 7.8], fov: 46 }}
-      dpr={[1, 1.45]}
-      gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
-      frameloop={reduced ? "demand" : "always"}
-    >
-      <ambientLight intensity={0.75} />
-      <directionalLight position={[4, 3, 6]} intensity={2.2} color="#f6f2e9" />
-      <pointLight position={[-4, -2, 4]} intensity={15} color="#7957ff" distance={12} />
-      <pointLight position={[3, 2, 2]} intensity={9} color="#d8ff3e" distance={10} />
-      <SpatialCore reduced={reduced} />
-    </Canvas>
+    <div ref={container} style={{ width: "100%", height: "100%" }}>
+      <Canvas
+        camera={{ position: [0, 0, 7.8], fov: 46 }}
+        dpr={[1, 1.45]}
+        gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+        frameloop={reduced || !inView ? "demand" : "always"}
+      >
+        <ambientLight intensity={0.75} />
+        <directionalLight position={[4, 3, 6]} intensity={2.2} color="#f6f2e9" />
+        <pointLight position={[-4, -2, 4]} intensity={15} color="#7957ff" distance={12} />
+        <pointLight position={[3, 2, 2]} intensity={9} color="#d8ff3e" distance={10} />
+        <SpatialCore reduced={reduced} />
+      </Canvas>
+    </div>
   );
 }

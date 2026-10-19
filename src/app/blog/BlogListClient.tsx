@@ -49,7 +49,7 @@ export default function BlogListClient({ posts, settings }: Props) {
       <main id="main-content">
         <section className={styles.hero} data-journal-hero>
           <div className={styles.journalObject} data-journal-object aria-hidden="true"><i /><i /><i /></div>
-          <p>Engineering journal / {String(posts.length).padStart(2, "0")} transmissions</p>
+          <p>Journal / {String(posts.length).padStart(2, "0")} notes</p>
           <h1>
             <span><i data-journal-line>Field</i></span>
             <span><i data-journal-line>notes.</i></span>
@@ -63,8 +63,8 @@ export default function BlogListClient({ posts, settings }: Props) {
         <section className={styles.archive}>
           <header className={styles.archiveHeader}>
             <div>
-              <span>Archive control</span>
-              <strong>{filtered.length} / {posts.length} notes visible</strong>
+              <span>Search and filter</span>
+              <strong role="status">{filtered.length} of {posts.length} notes shown</strong>
             </div>
             <label className={styles.search}>
               <Search aria-hidden="true" />
@@ -74,9 +74,9 @@ export default function BlogListClient({ posts, settings }: Props) {
             </label>
           </header>
 
-          <div className={styles.tags} aria-label="Filter by topic">
-            <button className={!tag ? styles.activeTag : ""} onClick={() => setTag(null)}>All notes</button>
-            {tags.map((item) => <button key={item} className={tag === item ? styles.activeTag : ""} onClick={() => setTag(item)}>{item}</button>)}
+          <div className={styles.tags} role="group" aria-label="Filter by topic">
+            <button type="button" aria-pressed={!tag} className={!tag ? styles.activeTag : ""} onClick={() => setTag(null)}>All notes</button>
+            {tags.map((item) => <button key={item} type="button" aria-pressed={tag === item} className={tag === item ? styles.activeTag : ""} onClick={() => setTag(tag === item ? null : item)}>{item}</button>)}
           </div>
 
           <div className={styles.entries}>
@@ -84,7 +84,7 @@ export default function BlogListClient({ posts, settings }: Props) {
               <article key={post.slug} data-journal-entry className={styles.entry}>
                 <div className={styles.entryIndex}>
                   <span>{String(index + 1).padStart(2, "0")}</span>
-                  {post.featured && <strong>Editor&apos;s signal</strong>}
+                  {post.featured && <strong>Featured</strong>}
                 </div>
                 <Link href={`/blog/${post.slug}`}>
                   <div className={styles.entryMeta}>
@@ -100,8 +100,8 @@ export default function BlogListClient({ posts, settings }: Props) {
             )) : (
               <div className={styles.empty}>
                 <span>0 results</span>
-                <h2>No note matches that signal.</h2>
-                <button onClick={() => { setSearch(""); setTag(null); }}>Reset archive</button>
+                <h2>No notes match {search.trim() ? `“${search.trim()}”` : "this topic"}{search.trim() && tag ? ` in ${tag}` : ""}.</h2>
+                <button type="button" onClick={() => { setSearch(""); setTag(null); }}>Clear filters</button>
               </div>
             )}
           </div>

@@ -51,7 +51,7 @@
 .identity small {
   margin-top: 0.23rem;
   color: #8e929d;
-  font: 500 0.54rem/1 var(--font-mono), monospace;
+  font: 500 var(--text-label)/1 var(--font-mono), monospace;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -63,10 +63,10 @@
 }
 
 .desktopLinks a,
-.availability {
+.contactLink {
   border-radius: 999px;
   color: #b9bdc7;
-  font: 600 0.63rem/1 var(--font-mono), monospace;
+  font: 600 var(--text-control)/1 var(--font-mono), monospace;
   letter-spacing: 0.06em;
   text-decoration: none;
   text-transform: uppercase;
@@ -77,13 +77,20 @@
   padding: 0.82rem 1rem;
 }
 
-.desktopLinks a:hover {
+.desktopLinks a[aria-current] {
   background: rgba(255, 255, 255, 0.07);
   color: #fff;
-  transform: translateY(-2px);
 }
 
-.availability {
+@media (hover: hover) {
+  .desktopLinks a:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+}
+
+.contactLink {
   display: flex;
   align-items: center;
   gap: 0.55rem;
@@ -92,7 +99,7 @@
   color: #e8ff91;
 }
 
-.availability span {
+.contactLink span {
   width: 0.42rem;
   height: 0.42rem;
   border-radius: 50%;
@@ -129,23 +136,28 @@
   position: fixed;
   z-index: 30;
   inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   visibility: hidden;
   background: rgba(5, 6, 9, 0.93);
   opacity: 0;
   backdrop-filter: blur(28px);
-  transition: opacity 600ms cubic-bezier(0.32, 0.72, 0, 1), visibility 600ms;
+  /* Hidden only after the fade-out, so links leave the tab order when the menu closes. */
+  transition: opacity 600ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 600ms;
 }
 
 .overlayOpen {
   visibility: visible;
   opacity: 1;
+  /* Visible immediately on open, so focus can move into the menu right away. */
+  transition: opacity 600ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s;
 }
 
 .overlayGrid {
   display: grid;
   grid-template-rows: auto 1fr auto;
   width: min(1180px, calc(100% - 2rem));
-  height: 100%;
+  min-height: 100%;
   margin: 0 auto;
   padding: 8rem 0 2rem;
 }
@@ -153,7 +165,7 @@
 .overlayGrid > p,
 .overlayMeta {
   color: #818691;
-  font: 500 0.62rem/1.4 var(--font-mono), monospace;
+  font: 500 var(--text-label)/1.4 var(--font-mono), monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -185,11 +197,21 @@
   transform: translateY(0);
 }
 
-.overlayLinks a:hover { color: #d8ff3e; }
+.overlayLinks a[aria-current] { color: #d8ff3e; }
 
-.overlayLinks span {
+.overlayLinks a[aria-current] .menuLabel {
+  text-decoration: underline;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.12em;
+}
+
+@media (hover: hover) {
+  .overlayLinks a:hover { color: #d8ff3e; }
+}
+
+.overlayLinks .menuIndex {
   color: #716a87;
-  font: 500 0.6rem/1 var(--font-mono), monospace;
+  font: 500 var(--text-label)/1 var(--font-mono), monospace;
   letter-spacing: 0;
 }
 
@@ -201,14 +223,14 @@
   border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-@media (max-width: 800px) {
+@media (max-width: 960px) {
   .nav {
     top: 0.75rem;
     grid-template-columns: 1fr auto;
     min-height: 3.85rem;
   }
   .desktopLinks,
-  .availability { display: none; }
+  .contactLink { display: none; }
   .menuButton { position: relative; display: block; }
   .identity small { display: none; }
   .overlayMeta { flex-direction: column; }

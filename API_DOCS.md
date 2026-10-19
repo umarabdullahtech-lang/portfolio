@@ -108,7 +108,7 @@ Submit a contact form message. Rate-limited to 5 submissions per 15 minutes per 
 
 | Status | Description |
 |--------|-------------|
-| 400 | Validation error (missing/invalid fields) |
+| 400 | Validation error (missing/invalid fields). The body also includes `field` (`name`, `email`, `subject`, or `message`) naming the input that failed |
 | 429 | Rate limit exceeded. Includes `Retry-After` header (seconds) |
 | 500 | Internal server error |
 

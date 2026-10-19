@@ -33,6 +33,13 @@ const technologyPoints: Point[] = [
   { x: 5, y: 48 },
 ];
 
+// Edge nodes grow inward from their anchor so their labels stay inside the frame.
+function sideOf(point: Point) {
+  if (point.x < 35) return "start";
+  if (point.x > 65) return "end";
+  return "center";
+}
+
 function pointToViewBox(point: Point) {
   return { x: point.x * 10, y: point.y * 6.5 };
 }
@@ -70,6 +77,7 @@ export default function ProjectKnowledgeGraph({ project, compact = false }: Prop
       ref={graph}
       onPointerMove={handlePointerMove}
       onPointerLeave={resetPointer}
+      role="group"
       aria-label={`${project.title} architecture knowledge graph`}
     >
       <div className={styles.chrome}>
@@ -152,6 +160,7 @@ export default function ProjectKnowledgeGraph({ project, compact = false }: Prop
             return (
               <div
                 className={styles.technologyNode}
+                data-side={sideOf(point)}
                 key={technology}
                 style={{
                   "--node-x": `${point.x}%`,

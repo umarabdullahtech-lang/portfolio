@@ -1,5 +1,6 @@
 import { prisma } from './prisma';
 import { recordToProject } from './project-record';
+import { publicContactEmail } from './contact';
 
 export async function getBlogPosts() {
   return prisma.blogPost.findMany({
@@ -21,18 +22,26 @@ export async function getBlogPost(slug: string) {
 
 export async function getProjects() {
   const projects = await prisma.project.findMany({
+    where: { published: true },
     orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
   });
   return projects.map(recordToProject);
 }
 
 export async function getProjectBySlug(slug: string) {
-  const project = await prisma.project.findUnique({ where: { slug } });
+  const project = await prisma.project.findFirst({ where: { slug, published: true } });
   return project ? recordToProject(project) : null;
 }
 
+// Sample rows that earlier versions of prisma/seed.ts inserted. They are not real
+// career history, so the public site never shows them; replace them in /admin.
+const SAMPLE_EXPERIENCE_COMPANIES = ['TechCorp Inc.', 'StartupXYZ', 'Digital Agency Co.', 'University of Technology'];
+
 export async function getExperiences() {
-  return prisma.experience.findMany({ orderBy: { sortOrder: 'asc' } });
+  return prisma.experience.findMany({
+    where: { company: { notIn: SAMPLE_EXPERIENCE_COMPANIES } },
+    orderBy: { sortOrder: 'asc' },
+  });
 }
 
 export async function getSkills() {
@@ -45,6 +54,8 @@ export async function getSiteSettings() {
   for (const s of settings) {
     map[s.key] = s.value;
   }
+  // Never ship a placeholder address to the page, not even in serialized props.
+  if (map.contact_email && !publicContactEmail(map)) delete map.contact_email;
   return map;
 }
 

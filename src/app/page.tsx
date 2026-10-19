@@ -17,17 +17,17 @@ export default async function Home() {
     getExperiences(),
     getSkills(),
   ]);
-  const homeProjects = projects
-    .filter((project) => project.category !== "Open-source Reference")
-    .slice(0, 6);
-  const liveProjectCount = projects.filter((project) => project.liveUrl && project.liveUrl !== "#").length;
+  // Open-source studies are reviewed, not authored, so they stay out of the counts.
+  const ownProjects = projects.filter((project) => project.category !== "Open-source Reference");
+  const homeProjects = ownProjects.slice(0, 6);
+  const liveProjectCount = ownProjects.filter((project) => project.liveUrl && project.liveUrl !== "#").length;
 
   return (
     <PortfolioExperience
       settings={settings}
       posts={featuredPosts}
       projects={homeProjects}
-      projectCount={projects.length}
+      projectCount={ownProjects.length}
       liveProjectCount={liveProjectCount}
       experiences={experiences}
       skills={skills}

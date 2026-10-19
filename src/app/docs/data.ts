@@ -776,7 +776,7 @@ const data = await res.json();`,
   "id": "clx..."
 }`,
         errors: [
-          { status: 400, description: "Validation error (missing fields, invalid email, length exceeded)" },
+          { status: 400, description: "Validation error (missing fields, invalid email, length exceeded). The field property names the failing input" },
           { status: 429, description: "Too many submissions" },
           { status: 500, description: "Internal server error" },
         ],

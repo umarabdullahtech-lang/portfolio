@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -11,9 +11,18 @@ import AsciiSpatialScene from "@/components/AsciiSpatialScene";
 import ProjectKnowledgeGraph from "@/components/ProjectKnowledgeGraph";
 import { GithubIcon, LinkedinIcon } from "@/components/SocialIcons";
 import type { PortfolioProject } from "@/data/projects";
+import { publicContactEmail } from "@/lib/contact";
 import styles from "./PortfolioExperience.module.css";
 
 if (typeof window !== "undefined") gsap.registerPlugin(ScrollTrigger, useGSAP);
+
+// The pinned horizontal project rail and the stacked career cards only run here; the
+// matching @media block in PortfolioExperience.module.css lays the rail out sideways.
+// Everywhere else (small screens, reduced motion) every section stacks vertically.
+const PINNED_MOTION_QUERY = "(min-width: 900px) and (prefers-reduced-motion: no-preference) and (scripting: enabled)";
+
+type ContactField = "name" | "email" | "subject" | "message";
+const CONTACT_FIELDS: ContactField[] = ["name", "email", "subject", "message"];
 
 type Project = PortfolioProject;
 
@@ -108,20 +117,17 @@ const constellationPositions = [
   { x: 80, y: 82, tier: 2 },
 ];
 
+// corner anchors each signal to the box edge on small screens, where centring overflows.
 const projectSignalPositions = [
-  { x: 19, y: 30 },
-  { x: 78, y: 25 },
-  { x: 83, y: 72 },
-  { x: 20, y: 76 },
+  { x: 19, y: 30, corner: "tl" },
+  { x: 78, y: 25, corner: "tr" },
+  { x: 83, y: 72, corner: "br" },
+  { x: 20, y: 76, corner: "bl" },
 ];
-
-function projectSignal(project: Project) {
-  return project.proof[0]?.value || "Live";
-}
 
 function TechConstellation({ skills }: { skills: Skill[] }) {
   return (
-    <div className={styles.techGalaxy} data-tech-galaxy aria-label="Interactive map of the core technology stack">
+    <div className={styles.techGalaxy} data-tech-galaxy role="group" aria-label="Map of the core technology stack">
       <div className={styles.galaxyChrome}>
         <span>Technology constellation</span>
         <span>Production stack / live map</span>
@@ -162,7 +168,7 @@ function TechConstellation({ skills }: { skills: Skill[] }) {
 
 function ProjectObservatory({ projects }: { projects: Project[] }) {
   return (
-    <div className={styles.projectObservatory} data-project-observatory aria-label="Map of selected production systems">
+    <div className={styles.projectObservatory} data-project-observatory role="group" aria-label="Map of selected production systems">
       <div className={styles.observatoryChrome}>
         <span>System telemetry</span>
         <span>{String(projects.length).padStart(2, "0")} cases online</span>
@@ -180,12 +186,13 @@ function ProjectObservatory({ projects }: { projects: Project[] }) {
             <div
               className={styles.projectSignal}
               data-project-signal
+              data-corner={position.corner}
               key={project.id}
               style={{ "--signal-x": `${position.x}%`, "--signal-y": `${position.y}%`, "--signal-delay": `${index * -0.65}s` } as React.CSSProperties}
             >
               <i aria-hidden="true" />
-              <span>{project.title.split(" ").slice(0, 2).join(" ")}</span>
-              <strong>{projectSignal(project)}</strong>
+              <span>{project.title}</span>
+              <strong>{project.category}</strong>
             </div>
           );
         })}
@@ -193,7 +200,7 @@ function ProjectObservatory({ projects }: { projects: Project[] }) {
       </div>
       <div className={styles.observatoryFooter}>
         <span>AI / SaaS / Automation / Knowledge</span>
-        <span>Scroll vector: horizontal</span>
+        <span>Scroll to explore</span>
       </div>
     </div>
   );
@@ -201,8 +208,10 @@ function ProjectObservatory({ projects }: { projects: Project[] }) {
 
 export default function PortfolioExperience({ settings, projects, projectCount, liveProjectCount, experiences, skills, posts }: Props) {
   const root = useRef<HTMLDivElement>(null);
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [form, setForm] = useState<Record<ContactField, string>>({ name: "", email: "", subject: "", message: "" });
   const [formStatus, setFormStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [formError, setFormError] = useState<{ field?: ContactField; message: string } | null>(null);
+  const contactEmail = publicContactEmail(settings);
   const homeProjects = projects
     .filter((project) => project.category !== "Open-source Reference")
     .slice(0, 6);
@@ -334,7 +343,14 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
 
       const tickerTrack = root.current?.querySelector<HTMLElement>("[data-ticker-track]");
       if (tickerTrack) {
-        const tickerTween = gsap.to(tickerTrack, { xPercent: -50, repeat: -1, duration: 32, ease: "none" });
+        const tickerTween = gsap.to(tickerTrack, { xPercent: -50, repeat: -1, duration: 32, ease: "none", paused: true });
+        // The marquee only moves while it is on screen.
+        ScrollTrigger.create({
+          trigger: tickerTrack,
+          start: "top bottom",
+          end: "bottom top",
+          onToggle: (self) => (self.isActive ? tickerTween.play() : tickerTween.pause()),
+        });
         ScrollTrigger.create({
           start: 0,
           end: "max",
@@ -347,7 +363,8 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
       }
 
       const media = gsap.matchMedia();
-      media.add("(min-width: 900px)", () => {
+      media.add(PINNED_MOTION_QUERY, () => {
+        const cleanups: Array<() => void> = [];
         const rail = root.current?.querySelector<HTMLElement>("[data-project-rail]");
         const stage = root.current?.querySelector<HTMLElement>("[data-project-stage]");
         if (rail && stage) {
@@ -365,6 +382,20 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
               anticipatePin: 1,
             },
           });
+
+          // Keyboard focus on an off-screen panel moves the page to the scroll position
+          // that slides that panel into view, instead of leaving it behind the clip.
+          const onFocusIn = (event: FocusEvent) => {
+            const item = (event.target as HTMLElement).closest<HTMLElement>("[data-rail-item]");
+            const trigger = railTween.scrollTrigger;
+            const max = distance();
+            if (!item || !trigger || !max) return;
+            const offset = gsap.utils.clamp(0, max, item.offsetLeft - (window.innerWidth - item.offsetWidth) / 2);
+            const top = trigger.start + (offset / max) * (trigger.end - trigger.start);
+            window.requestAnimationFrame(() => window.scrollTo({ top, behavior: "instant" }));
+          };
+          stage.addEventListener("focusin", onFocusIn);
+          cleanups.push(() => stage.removeEventListener("focusin", onFocusIn));
 
           gsap.utils.toArray<HTMLElement>("[data-project-visual]").forEach((visual) => {
             gsap.fromTo(
@@ -434,28 +465,32 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
             invalidateOnRefresh: true,
           });
         }
-      });
 
-      gsap.utils.toArray<HTMLElement>("[data-experience-card]").forEach((card, index) => {
-        gsap.fromTo(
-          card,
-          { opacity: 0.16, y: 90, rotateX: 10 },
-          {
-            opacity: 1,
-            y: 0,
-            rotateX: 0,
-            ease: "none",
-            scrollTrigger: { trigger: card, start: "top 92%", end: "top 48%", scrub: 0.6 },
+        // Cards stack on top of each other here, so a card dims only once the next one
+        // covers it. On small screens the cards scroll normally and stay fully opaque.
+        gsap.utils.toArray<HTMLElement>("[data-experience-card]").forEach((card, index, cards) => {
+          gsap.fromTo(
+            card,
+            { opacity: 0.16, y: 90, rotateX: 10 },
+            {
+              opacity: 1,
+              y: 0,
+              rotateX: 0,
+              ease: "none",
+              scrollTrigger: { trigger: card, start: "top 92%", end: "top 48%", scrub: 0.6 },
+            }
+          );
+          if (index < cards.length - 1) {
+            gsap.to(card, {
+              scale: 0.96,
+              opacity: 0.35,
+              ease: "none",
+              scrollTrigger: { trigger: cards[index + 1], start: "top 70%", end: "top 20%", scrub: 0.7 },
+            });
           }
-        );
-        if (index < experiences.length - 1) {
-          gsap.to(card, {
-            scale: 0.96,
-            opacity: 0.35,
-            ease: "none",
-            scrollTrigger: { trigger: card, start: "top 18%", end: "bottom top", scrub: 0.7 },
-          });
-        }
+        });
+
+        return () => cleanups.forEach((cleanup) => cleanup());
       });
 
       ScrollTrigger.refresh();
@@ -464,24 +499,75 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
     { scope: root, dependencies: [homeProjects.length, experiences.length] }
   );
 
+  // Decorative CSS loops (pulses, orbits, floating nodes) pause while their section is off screen.
+  useEffect(() => {
+    const sections = root.current?.querySelectorAll<HTMLElement>("main section");
+    if (!sections?.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((entry) => entry.target.toggleAttribute("data-offscreen", !entry.isIntersecting)),
+      { rootMargin: "200px 0px" }
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
+  // A field error moves focus to the field, which then announces the message it describes.
+  useEffect(() => {
+    if (formError?.field) document.getElementById(formError.field)?.focus();
+  }, [formError]);
+
+  function updateField(field: ContactField, value: string) {
+    setForm((current) => ({ ...current, [field]: value }));
+    if (formError?.field === field) setFormError(null);
+  }
+
+  function fieldProps(field: ContactField) {
+    const invalid = formError?.field === field;
+    return {
+      id: field,
+      name: field,
+      value: form[field],
+      onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => updateField(field, event.target.value),
+      "aria-invalid": invalid || undefined,
+      "aria-describedby": invalid ? `${field}-error` : undefined,
+    };
+  }
+
+  function fieldError(field: ContactField) {
+    return formError?.field === field ? <p id={`${field}-error`} className={styles.fieldError}>{formError.message}</p> : null;
+  }
+
   async function submitContact(event: React.FormEvent) {
     event.preventDefault();
     setFormStatus("loading");
+    setFormError(null);
+    const fallback = contactEmail ? ` You can also email ${contactEmail}.` : "";
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!response.ok) throw new Error("Unable to send");
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const field = CONTACT_FIELDS.find((name) => name === payload.field);
+        const serverMessage = typeof payload.error === "string" ? payload.error : "";
+        setFormStatus("error");
+        if (field && serverMessage) setFormError({ field, message: serverMessage });
+        else if (response.status === 429 && serverMessage) setFormError({ message: `${serverMessage}${fallback}` });
+        else setFormError({ message: `Unable to send your message right now. Try again in a few minutes.${fallback}` });
+        return;
+      }
       setFormStatus("success");
       setForm({ name: "", email: "", subject: "", message: "" });
     } catch {
       setFormStatus("error");
+      setFormError({ message: `Unable to send your message. Check your connection and try again.${fallback}` });
     }
   }
 
-  const contactEmail = settings.contact_email || "umar@example.com";
+  const linkedinUrl = settings.social_linkedin;
+  const githubUrl = settings.social_github;
 
   return (
     <div ref={root} className={styles.experience}>
@@ -515,7 +601,7 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
                 Ten years engineering scalable software. Five years shipping production AI—agents, retrieval, automation, and platforms built for real-world load.
               </p>
               <div className={styles.heroActions} data-hero-fade>
-                <Link href="/work" className={styles.primaryAction}>Explore selected work <i><ArrowUpRight size={16} /></i></Link>
+                <Link href="/work" className={styles.primaryAction}>Explore the work <i><ArrowUpRight size={16} /></i></Link>
                 <a href="#expertise" className={styles.secondaryAction}>Explore capabilities</a>
               </div>
             </div>
@@ -553,7 +639,7 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
           <div className={styles.thesisSticky}>
             <p className={styles.sectionEyebrow}>A decade of engineering judgment</p>
             <h2 className={styles.thesisTitle}>
-              {"I design system that think.".split(" ").map((word, index) => (
+              {"I design systems that think.".split(" ").map((word, index) => (
                 <span key={`${word}-${index}`} data-thesis-word>{word}&nbsp;</span>
               ))}
             </h2>
@@ -614,7 +700,7 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
               <ProjectObservatory projects={homeProjects} />
             </header>
             {homeProjects.map((project, index) => (
-              <article key={project.id} className={styles.projectPanel}>
+              <article key={project.id} className={styles.projectPanel} data-rail-item>
                 <div className={styles.projectMeta}>
                   <span>{String(index + 1).padStart(2, "0")} / {String(homeProjects.length).padStart(2, "0")}</span>
                   <span>{project.featured ? "Featured system" : "Selected build"}</span>
@@ -630,7 +716,7 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
                 </div>
               </article>
             ))}
-            <div className={styles.projectOutro}>
+            <div className={styles.projectOutro} data-rail-item>
               <p>There is more beneath the surface.</p>
               <Link href="/work">View the complete work archive <ArrowUpRight size={18} /></Link>
             </div>
@@ -645,6 +731,16 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
             <div className={styles.careerIndex}><span>10Y</span><i /><span>05Y AI</span></div>
           </div>
           <div className={styles.careerCards}>
+            {experiences.length === 0 && (
+              <div className={styles.careerEmpty}>
+                <h3>{linkedinUrl ? "Full role history is on LinkedIn." : "Ask for the full role history."}</h3>
+                {linkedinUrl ? (
+                  <a href={linkedinUrl} target="_blank" rel="noreferrer">Open the LinkedIn profile <ArrowUpRight size={16} aria-hidden="true" /></a>
+                ) : (
+                  <a href="#contact">Get in touch <ArrowUpRight size={16} aria-hidden="true" /></a>
+                )}
+              </div>
+            )}
             {experiences.map((item, index) => (
               <article key={item.id} data-experience-card>
                 <div className={styles.careerCardTop}>
@@ -661,15 +757,15 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
 
         <section id="blog" className={styles.insights}>
           <header data-reveal>
-            <p className={styles.sectionEyebrow}>Engineering notes</p>
+            <p className={styles.sectionEyebrow}>Journal</p>
             <h2>I document the decisions behind the systems.</h2>
-            <Link href="/blog">Browse all writing <ArrowUpRight size={16} /></Link>
+            <Link href="/blog">Read the journal <ArrowUpRight size={16} /></Link>
           </header>
           <div className={styles.insightGrid}>
             {posts.map((post, index) => (
               <Link key={post.slug} href={`/blog/${post.slug}`} className={styles.insightCard} data-reveal>
                 <div><span>{new Date(post.publishedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span><span>{post.readingTime} min</span></div>
-                <span className={styles.insightIndex}>0{index + 1}</span>
+                <span className={styles.insightIndex} aria-hidden="true">0{index + 1}</span>
                 <h3>{post.title}</h3>
                 <p>{post.excerpt}</p>
                 <small>{post.tags.slice(0, 3).join(" / ")}</small>
@@ -688,20 +784,22 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
           <div className={styles.contactGrid}>
             <div className={styles.contactDirect} data-reveal>
               <span>Prefer a direct line?</span>
-              <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
-              <div>
-                <a href={settings.social_github || "#"} target="_blank" rel="noreferrer"><GithubIcon size={18} /> GitHub</a>
-                <a href={settings.social_linkedin || "#"} target="_blank" rel="noreferrer"><LinkedinIcon size={18} /> LinkedIn</a>
-              </div>
+              {contactEmail ? <a href={`mailto:${contactEmail}`}>{contactEmail}</a> : <p>Send a message with the form, or reach out on a profile below.</p>}
+              {(githubUrl || linkedinUrl) && (
+                <div>
+                  {githubUrl && <a href={githubUrl} target="_blank" rel="noreferrer"><GithubIcon size={18} /> GitHub</a>}
+                  {linkedinUrl && <a href={linkedinUrl} target="_blank" rel="noreferrer"><LinkedinIcon size={18} /> LinkedIn</a>}
+                </div>
+              )}
             </div>
             <form onSubmit={submitContact} className={styles.contactForm} data-reveal>
-              <div><label htmlFor="name">Name</label><input id="name" required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></div>
-              <div><label htmlFor="email">Email</label><input id="email" type="email" required value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></div>
-              <div className={styles.fullField}><label htmlFor="subject">Subject</label><input id="subject" required value={form.subject} onChange={(event) => setForm({ ...form, subject: event.target.value })} /></div>
-              <div className={styles.fullField}><label htmlFor="message">What are we building?</label><textarea id="message" rows={4} required value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} /></div>
+              <div><label htmlFor="name">Name</label><input {...fieldProps("name")} required autoComplete="name" maxLength={200} />{fieldError("name")}</div>
+              <div><label htmlFor="email">Email</label><input {...fieldProps("email")} type="email" required autoComplete="email" maxLength={254} />{fieldError("email")}</div>
+              <div className={styles.fullField}><label htmlFor="subject">Subject</label><input {...fieldProps("subject")} required maxLength={500} />{fieldError("subject")}</div>
+              <div className={styles.fullField}><label htmlFor="message">What are we building?</label><textarea {...fieldProps("message")} rows={4} required maxLength={5000} />{fieldError("message")}</div>
               <button type="submit" disabled={formStatus === "loading"}>{formStatus === "loading" ? "Transmitting" : "Send briefing"}<i><Send size={15} /></i></button>
               {formStatus === "success" && <p role="status" className={styles.success}><Check size={14} /> Message received. I&apos;ll reply within 24 hours.</p>}
-              {formStatus === "error" && <p role="alert" className={styles.error}>Transmission failed. Email me directly instead.</p>}
+              {formStatus === "error" && formError && !formError.field && <p role="alert" className={styles.error}>{formError.message}</p>}
             </form>
           </div>
         </section>

@@ -158,6 +158,8 @@ export default function AsciiSpatialScene({ className }: AsciiSpatialSceneProps)
     let width = 0;
     let height = 0;
     let frame = 0;
+    let running = false;
+    let visible = true;
     let lastRender = 0;
     let pointerX = 0;
     let pointerY = 0;
@@ -200,23 +202,21 @@ export default function AsciiSpatialScene({ className }: AsciiSpatialSceneProps)
 
     const animate = (time: number) => {
       frame = window.requestAnimationFrame(animate);
-      if (document.hidden || reducedMotion.matches || width < 2 || height < 2) return;
+      if (width < 2 || height < 2) return;
 
       smoothX = THREE.MathUtils.lerp(smoothX, pointerX, 0.045);
       smoothY = THREE.MathUtils.lerp(smoothY, pointerY, 0.045);
       const elapsed = clock.getElapsedTime();
 
-      if (!reducedMotion.matches) {
-        topology.rotation.y = -0.36 + elapsed * 0.09 + smoothX * 0.34;
-        topology.rotation.x = 0.18 - smoothY * 0.2;
-        core.rotation.x = elapsed * 0.16;
-        core.rotation.z = -elapsed * 0.11;
-        topologyCage.rotation.y = -elapsed * 0.045;
-        topologyCage.rotation.z = elapsed * 0.035;
-        meridian.rotation.z = -0.15 + elapsed * 0.025;
-        orbit.rotation.y = 0.65 - elapsed * 0.04;
-        satelliteGroup.rotation.z = -elapsed * 0.055;
-      }
+      topology.rotation.y = -0.36 + elapsed * 0.09 + smoothX * 0.34;
+      topology.rotation.x = 0.18 - smoothY * 0.2;
+      core.rotation.x = elapsed * 0.16;
+      core.rotation.z = -elapsed * 0.11;
+      topologyCage.rotation.y = -elapsed * 0.045;
+      topologyCage.rotation.z = elapsed * 0.035;
+      meridian.rotation.z = -0.15 + elapsed * 0.025;
+      orbit.rotation.y = 0.65 - elapsed * 0.04;
+      satelliteGroup.rotation.z = -elapsed * 0.055;
 
       const targetFps = compact.matches ? 20 : 28;
       if (time - lastRender >= 1000 / targetFps) {
@@ -225,15 +225,38 @@ export default function AsciiSpatialScene({ className }: AsciiSpatialSceneProps)
       }
     };
 
+    // The loop only runs while the scene is on screen, the tab is visible, and motion
+    // is allowed; otherwise the last rendered frame stays as a still image.
+    const syncLoop = () => {
+      const shouldRun = visible && !document.hidden && !reducedMotion.matches;
+      if (shouldRun && !running) {
+        running = true;
+        frame = window.requestAnimationFrame(animate);
+      } else if (!shouldRun && running) {
+        running = false;
+        window.cancelAnimationFrame(frame);
+      }
+    };
+
     const observer = new ResizeObserver(resize);
     observer.observe(mount);
+    const visibility = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      syncLoop();
+    });
+    visibility.observe(mount);
+    document.addEventListener("visibilitychange", syncLoop);
+    reducedMotion.addEventListener("change", syncLoop);
     window.addEventListener("pointermove", handlePointer, { passive: true });
     resize();
-    frame = window.requestAnimationFrame(animate);
+    syncLoop();
 
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener("pointermove", handlePointer);
+      document.removeEventListener("visibilitychange", syncLoop);
+      reducedMotion.removeEventListener("change", syncLoop);
+      visibility.disconnect();
       observer.disconnect();
       if (effectElement.parentElement === mount) mount.removeChild(effectElement);
 

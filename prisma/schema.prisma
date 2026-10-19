@@ -43,6 +43,7 @@ model Project {
   image            String?
   imageAlt         String   @default("")
   featured         Boolean  @default(false)
+  published        Boolean  @default(true)
   sortOrder        Int      @default(0)
   techStack        String[]
   proof            Json     @default("[]")

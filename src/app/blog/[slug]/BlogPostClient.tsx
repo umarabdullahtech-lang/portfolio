@@ -22,8 +22,15 @@ interface BlogPostClientProps {
   settings: Record<string, string>;
 }
 
+// Posts open with their title as a Markdown H1; the page header already shows it.
+function withoutLeadingTitle(content: string, title: string) {
+  const match = content.match(/^\s*#\s+(.+?)\s*(?:\r?\n|$)/);
+  return match && match[1].trim() === title.trim() ? content.slice(match[0].length) : content;
+}
+
 export default function BlogPostClient({ post, settings }: BlogPostClientProps) {
   const scope = useRef<HTMLDivElement>(null);
+  const content = withoutLeadingTitle(post.content, post.title);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -50,9 +57,9 @@ export default function BlogPostClient({ post, settings }: BlogPostClientProps) 
       <main id="main-content">
         <header className={styles.hero} data-post-hero>
           <div className={styles.orbit} data-post-orbit aria-hidden="true"><i /><i /><i /></div>
-          <Link href="/blog" className={styles.back}><ArrowLeft /> Journal index</Link>
+          <Link href="/blog" className={styles.back}><ArrowLeft aria-hidden="true" /> Journal</Link>
           <div className={styles.metaLine}>
-            <span>{post.featured ? "Featured field note" : "Engineering field note"}</span>
+            <span>{post.featured ? "Featured note" : "Journal note"}</span>
             <time dateTime={post.publishedAt}>{new Date(post.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time>
             <span>{post.readingTime} min read</span>
           </div>
@@ -113,7 +120,7 @@ export default function BlogPostClient({ post, settings }: BlogPostClientProps) 
                 td: ({ children }) => <td>{children}</td>,
               }}
             >
-              {post.content}
+              {content}
             </ReactMarkdown>
           </article>
         </section>
@@ -122,7 +129,7 @@ export default function BlogPostClient({ post, settings }: BlogPostClientProps) 
           <span>End of transmission</span>
           <h2>Ideas become useful when they enter the system.</h2>
           <div>
-            <Link href="/blog"><ArrowLeft /> All field notes</Link>
+            <Link href="/blog"><ArrowLeft aria-hidden="true" /> All notes</Link>
             <Link href="/work">Explore the work <ArrowUpRight /></Link>
           </div>
         </section>

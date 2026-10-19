@@ -110,7 +110,7 @@ export default function ProjectFlowDiagram({ projectTitle, source }: Props) {
           <span>Mermaid / system architecture</span>
           <strong>{Math.round(zoom * 100)}%</strong>
         </div>
-        <div className={styles.controls} aria-label="Diagram controls">
+        <div className={styles.controls} role="group" aria-label="Diagram controls">
           <button type="button" onClick={() => changeZoom(-.15)} aria-label="Zoom out"><Minus aria-hidden="true" /></button>
           <button type="button" onClick={() => setZoom(1.2)} aria-label="Reset zoom"><RotateCcw aria-hidden="true" /></button>
           <button type="button" onClick={() => changeZoom(.15)} aria-label="Zoom in"><Plus aria-hidden="true" /></button>
