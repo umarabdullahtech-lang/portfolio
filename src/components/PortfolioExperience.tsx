@@ -791,6 +791,7 @@ export default function PortfolioExperience({ settings, projects, projectCount, 
                   {linkedinUrl && <a href={linkedinUrl} target="_blank" rel="noreferrer"><LinkedinIcon size={18} /> LinkedIn</a>}
                 </div>
               )}
+              <Link href="/about#contact" className={styles.contactAll}>All contact details <ArrowUpRight size={16} aria-hidden="true" /></Link>
             </div>
             <form onSubmit={submitContact} className={styles.contactForm} data-reveal>
               <div><label htmlFor="name">Name</label><input {...fieldProps("name")} required autoComplete="name" maxLength={200} />{fieldError("name")}</div>

@@ -962,6 +962,7 @@
 .contactDirect > a { color: var(--text); font-size: clamp(1.5rem, 2.6vw, 2.8rem); font-weight: 650; letter-spacing: -.05em; text-decoration: none; overflow-wrap: anywhere; }
 .contactDirect > p { max-width: 22rem; margin: 0; color: var(--muted); font-size: 1rem; line-height: 1.6; }
 .contactDirect > div { display: flex; flex-wrap: wrap; gap: .6rem; }
+.contactDirect > .contactAll { display: inline-flex; align-items: center; align-self: flex-start; gap: .5rem; color: var(--acid); font: 600 var(--text-control)/1 var(--font-mono), monospace; text-decoration: none; text-transform: uppercase; }
 .contactDirect > div a { display: flex; align-items: center; gap: .6rem; padding: .8rem 1rem; border: 1px solid var(--line); border-radius: 999px; color: #c5c8d0; font: 600 var(--text-control)/1 var(--font-mono), monospace; text-decoration: none; text-transform: uppercase; }
 
 .contactForm { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; padding: 2rem; border: 1px solid var(--line); border-radius: 2rem; background: rgba(255,255,255,.04); box-shadow: inset 0 1px rgba(255,255,255,.07); }

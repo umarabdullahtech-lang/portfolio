@@ -1,14 +1,22 @@
 import Link from "next/link";
 import { ArrowUpRight, Mail } from "lucide-react";
-import { GithubIcon, LinkedinIcon } from "@/components/SocialIcons";
-import { publicContactEmail } from "@/lib/contact";
+import { FacebookIcon, GithubIcon, InstagramIcon, LinkedinIcon, SnapchatIcon, XIcon } from "@/components/SocialIcons";
+import { buildProfile, type SocialNetwork } from "@/lib/profile";
 import styles from "./Footer.module.css";
 
 type Props = { settings?: Record<string, string> };
 
+const socialIcons: Record<SocialNetwork, typeof GithubIcon> = {
+  linkedin: LinkedinIcon,
+  github: GithubIcon,
+  instagram: InstagramIcon,
+  facebook: FacebookIcon,
+  snapchat: SnapchatIcon,
+  x: XIcon,
+};
+
 export default function Footer({ settings = {} }: Props) {
-  const email = publicContactEmail(settings);
-  const hasConnections = Boolean(settings.social_github || settings.social_linkedin || email);
+  const profile = buildProfile(settings);
 
   return (
     <footer className={styles.footer}>
@@ -22,13 +30,14 @@ export default function Footer({ settings = {} }: Props) {
       <div className={styles.grid}>
         <div className={styles.identity}>
           <span>UA / 2026</span>
-          <strong>{settings.hero_name || "Umar Abdullah"}</strong>
+          <strong>{profile.name}</strong>
           <p>Senior software and AI engineer shaping reliable, intelligent products.</p>
         </div>
 
         <nav aria-label="Footer navigation">
           <span>Explore</span>
           <Link href="/">Home</Link>
+          <Link href="/about">About</Link>
           <Link href="/work">Work</Link>
           <Link href="/blog">Journal</Link>
           <Link href="/docs">API docs</Link>
@@ -36,10 +45,12 @@ export default function Footer({ settings = {} }: Props) {
 
         <div className={styles.socials}>
           <span>Connect</span>
-          {settings.social_github && <a href={settings.social_github} target="_blank" rel="noreferrer"><GithubIcon /> GitHub</a>}
-          {settings.social_linkedin && <a href={settings.social_linkedin} target="_blank" rel="noreferrer"><LinkedinIcon /> LinkedIn</a>}
-          {email && <a href={`mailto:${email}`}><Mail aria-hidden="true" /> Email</a>}
-          {!hasConnections && <Link href="/#contact">Contact form</Link>}
+          {profile.socials.map((social) => {
+            const Icon = socialIcons[social.network];
+            return <a key={social.network} href={social.url} target="_blank" rel="noreferrer me"><Icon /> {social.label}</a>;
+          })}
+          {profile.email && <a href={profile.email.href}><Mail aria-hidden="true" /> Email</a>}
+          <Link href="/about#contact">All contact details</Link>
         </div>
       </div>
 

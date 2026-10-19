@@ -6,14 +6,14 @@ import { useEffect, useRef, useState } from "react";
 import styles from "./SiteNavbar.module.css";
 
 const links = [
-  { label: "Profile", href: "/#about" },
+  { label: "About", href: "/about" },
   { label: "Expertise", href: "/#expertise" },
   { label: "Work", href: "/work" },
   { label: "Experience", href: "/#experience" },
   { label: "Journal", href: "/blog" },
 ];
 
-const menuLinks = [{ label: "Home", href: "/" }, ...links, { label: "Contact", href: "/#contact" }];
+const menuLinks = [{ label: "Home", href: "/" }, ...links, { label: "Contact", href: "/about#contact" }];
 
 // In-page anchors never mark the current page; section pages also cover their children.
 function currentState(pathname: string, href: string) {
@@ -73,7 +73,7 @@ export default function Navbar() {
           ))}
         </div>
 
-        <Link href="/#contact" className={styles.contactLink}>
+        <Link href="/about#contact" className={styles.contactLink}>
           <span aria-hidden="true" /> Contact
         </Link>
 

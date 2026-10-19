@@ -524,6 +524,24 @@ function CrudForm({ item, fields, onSave, onCancel, title }: {
   );
 }
 
+// Public profile fields shown on /about, the footer, and the downloadable contact card.
+// They are listed even before they exist so they can be filled in; empty fields stay hidden.
+const PROFILE_FIELDS: { key: string; label: string; placeholder: string }[] = [
+  { key: "contact_email", label: "Email", placeholder: "name@domain.com" },
+  { key: "contact_phone", label: "Phone (with country code)", placeholder: "+92 300 1234567" },
+  { key: "contact_whatsapp", label: "WhatsApp number (with country code)", placeholder: "+92 300 1234567" },
+  { key: "contact_location", label: "Location", placeholder: "Lahore, Pakistan" },
+  { key: "contact_timezone", label: "Time zone", placeholder: "Asia/Karachi" },
+  { key: "social_linkedin", label: "LinkedIn URL", placeholder: "https://www.linkedin.com/in/handle" },
+  { key: "social_github", label: "GitHub URL", placeholder: "https://github.com/handle" },
+  { key: "social_instagram", label: "Instagram URL or @handle", placeholder: "@handle" },
+  { key: "social_facebook", label: "Facebook URL", placeholder: "https://www.facebook.com/handle" },
+  { key: "social_snapchat", label: "Snapchat URL or @handle", placeholder: "@handle" },
+  { key: "social_x", label: "X (Twitter) URL or @handle", placeholder: "@handle" },
+  { key: "profile_photo", label: "Profile photo path (file in /public)", placeholder: "/about/umar-abdullah.jpg" },
+];
+const PROFILE_FIELD_INFO = new Map(PROFILE_FIELDS.map((field) => [field.key, field]));
+
 function SettingsTab() {
   const [settings, setSettings] = useState<{ key: string; value: string }[]>([]);
   const [saving, setSaving] = useState(false);
@@ -531,7 +549,13 @@ function SettingsTab() {
   useEffect(() => {
     fetch("/api/admin/settings", { credentials: "include" })
       .then((r) => r.json())
-      .then((d) => setSettings(d.settings || []));
+      .then((d) => {
+        const existing: { key: string; value: string }[] = d.settings || [];
+        const known = new Set(existing.map((setting) => setting.key));
+        const missing = PROFILE_FIELDS.filter((field) => !known.has(field.key)).map((field) => ({ key: field.key, value: "" }));
+        const order = (key: string) => (PROFILE_FIELD_INFO.has(key) ? PROFILE_FIELDS.findIndex((field) => field.key === key) : PROFILE_FIELDS.length);
+        setSettings([...existing, ...missing].sort((a, b) => order(a.key) - order(b.key)));
+      });
   }, []);
 
   const updateValue = (key: string, value: string) => {
@@ -563,11 +587,14 @@ function SettingsTab() {
       <div className="space-y-4 max-w-2xl">
         {settings.map((s) => (
           <div key={s.key}>
-            <label className="block text-xs font-medium text-slate-400 mb-1">{s.key}</label>
+            <label htmlFor={`setting-${s.key}`} className="block text-xs font-medium text-slate-400 mb-1">
+              {PROFILE_FIELD_INFO.get(s.key)?.label ?? s.key}
+              {PROFILE_FIELD_INFO.has(s.key) && <span className="ml-2 font-mono text-slate-600">{s.key}</span>}
+            </label>
             {s.value.length > 100 ? (
-              <textarea value={s.value} onChange={(e) => updateValue(s.key, e.target.value)} rows={3} className={`${inputClass} resize-y`} />
+              <textarea id={`setting-${s.key}`} value={s.value} onChange={(e) => updateValue(s.key, e.target.value)} rows={3} className={`${inputClass} resize-y`} />
             ) : (
-              <input value={s.value} onChange={(e) => updateValue(s.key, e.target.value)} className={inputClass} />
+              <input id={`setting-${s.key}`} value={s.value} placeholder={PROFILE_FIELD_INFO.get(s.key)?.placeholder} onChange={(e) => updateValue(s.key, e.target.value)} className={inputClass} />
             )}
           </div>
         ))}
