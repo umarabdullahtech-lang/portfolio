@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from "next";
+import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Clock3, Download, MapPin, MessageSquareText } from "lucide-react";
+import { ArrowUpRight, Download, Mail, MapPin, Phone, Send } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { FacebookIcon, GithubIcon, InstagramIcon, LinkedinIcon, SnapchatIcon, WhatsappIcon, XIcon } from "@/components/SocialIcons";
-import { getSiteSettings } from "@/lib/data";
+import { getProjects, getSiteSettings } from "@/lib/data";
 import { buildProfile, type SocialNetwork } from "@/lib/profile";
-import { ActionIcon, CopyButton, LocalTime, QuickContactBar, type QuickAction } from "./ContactActions";
+import { CopyButton, LocalTime, QuickContactBar, type QuickAction } from "./ContactActions";
 import styles from "./about.module.css";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,7 @@ export const viewport: Viewport = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const profile = buildProfile(await getSiteSettings());
-  const description = `How to reach ${profile.name}, ${profile.title}: phone, WhatsApp, email, and social profiles in one place.`;
+  const description = `How to reach ${profile.name}, ${profile.title}: WhatsApp, phone, email, and social profiles in one place.`;
   return {
     title: `About & Contact | ${profile.name}`,
     description,
@@ -39,6 +40,16 @@ const socialIcons: Record<SocialNetwork, typeof GithubIcon> = {
   x: XIcon,
 };
 
+type Tile = {
+  id: "whatsapp" | "phone" | "email" | SocialNetwork;
+  label: string;
+  detail: ReactNode;
+  href: string;
+  external: boolean;
+  icon: ReactNode;
+  copy?: { value: string; label: string };
+};
+
 // Long addresses wrap after the @ on narrow screens instead of mid-domain.
 function breakableEmail(email: string) {
   const at = email.indexOf("@");
@@ -50,16 +61,52 @@ function initialsOf(name: string) {
 }
 
 export default async function AboutPage() {
-  const settings = await getSiteSettings();
+  const [settings, projects] = await Promise.all([getSiteSettings(), getProjects()]);
   const profile = buildProfile(settings);
   const { email, phone, whatsapp } = profile;
+  const tagline = settings.about_subtitle?.trim();
+  const projectCount = projects.filter((project) => project.category !== "Open-source Reference").length;
 
-  const actions: QuickAction[] = [
+  const contactTiles: Array<Tile | null> = [
+    whatsapp ? {
+      id: "whatsapp" as const,
+      label: "WhatsApp",
+      detail: whatsapp.display,
+      href: whatsapp.href,
+      external: true,
+      icon: <WhatsappIcon size={22} />,
+      copy: { value: whatsapp.display, label: "WhatsApp number" },
+    } : null,
+    phone ? {
+      id: "phone" as const,
+      label: "Phone",
+      detail: phone.display,
+      href: phone.href,
+      external: false,
+      icon: <Phone size={21} aria-hidden="true" />,
+      copy: { value: phone.display, label: "phone number" },
+    } : null,
+    email ? {
+      id: "email" as const,
+      label: "Email",
+      detail: breakableEmail(email.display),
+      href: email.href,
+      external: false,
+      icon: <Mail size={21} aria-hidden="true" />,
+      copy: { value: email.display, label: "email address" },
+    } : null,
+  ];
+  const socialTiles: Tile[] = profile.socials.map((social) => {
+    const Icon = socialIcons[social.network];
+    return { id: social.network, label: social.label, detail: social.handle, href: social.url, external: true, icon: <Icon size={22} /> };
+  });
+  const tiles = [...contactTiles.filter((tile): tile is Tile => tile !== null), ...socialTiles];
+
+  const quickActions: QuickAction[] = [
     whatsapp && { kind: "whatsapp" as const, label: "WhatsApp", href: whatsapp.href },
     phone && { kind: "phone" as const, label: "Call", href: phone.href },
     email && { kind: "email" as const, label: "Email", href: email.href },
   ].filter((action): action is QuickAction => Boolean(action));
-  const canSaveContact = Boolean(phone || email);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -75,151 +122,89 @@ export default async function AboutPage() {
   };
 
   return (
-    <div className={styles.page} data-has-bar={actions.length > 0 || undefined}>
+    <div className={styles.page} data-has-bar={quickActions.length > 0 || undefined}>
       <Navbar />
       <main id="main-content" className={styles.main}>
-        <section className={styles.intro} aria-labelledby="about-title">
-          <div className={styles.portrait}>
-            {profile.photo ? (
-              <Image src={profile.photo} alt={`Portrait of ${profile.name}`} fill sizes="(min-width: 960px) 400px, 128px" fetchPriority="high" />
-            ) : (
-              <span aria-hidden="true">{initialsOf(profile.name)}</span>
-            )}
+        <section className={styles.profile} aria-labelledby="about-title">
+          <div className={styles.avatar}>
+            <div className={styles.avatarImage}>
+              {profile.photo ? (
+                <Image src={profile.photo} alt={`Portrait of ${profile.name}`} fill sizes="(min-width: 640px) 152px, 124px" fetchPriority="high" />
+              ) : (
+                <span aria-hidden="true">{initialsOf(profile.name)}</span>
+              )}
+            </div>
+            <span className={styles.onlineDot} aria-hidden="true" />
           </div>
 
-          <div className={styles.identity}>
-            <p className={styles.eyebrow}>About and contact</p>
-            <h1 id="about-title">{profile.name}</h1>
-            <p className={styles.role}>{profile.title}</p>
-          </div>
+          <h1 id="about-title">{profile.name}</h1>
+          <p className={styles.role}>{profile.title}</p>
+          {tagline && <p className={styles.tagline}>{tagline}</p>}
 
-          <ul className={styles.facts}>
+          <ul className={styles.chips}>
             <li><span className={styles.statusDot} aria-hidden="true" /> Available for select collaborations</li>
-            {profile.location && <li><MapPin size={16} aria-hidden="true" /> {profile.location}</li>}
-            <li><Clock3 size={16} aria-hidden="true" /> <LocalTime timeZone={profile.timeZone} /></li>
+            {profile.location && <li><MapPin size={14} aria-hidden="true" /> {profile.location}</li>}
+            <li><LocalTime timeZone={profile.timeZone} /></li>
           </ul>
 
-          {actions.length > 0 && (
-            <div id="primary-actions" className={styles.actions}>
-              {actions.map((action, index) => (
-                <a
-                  key={action.kind}
-                  href={action.href}
-                  className={index === 0 ? styles.actionPrimary : styles.action}
-                  target={action.kind === "whatsapp" ? "_blank" : undefined}
-                  rel={action.kind === "whatsapp" ? "noreferrer" : undefined}
-                >
-                  <ActionIcon kind={action.kind} />
-                  {action.label}
-                </a>
-              ))}
-              {canSaveContact && (
-                <a href="/about/vcard" className={styles.actionSave} download="umar-abdullah.vcf">
-                  <Download size={18} aria-hidden="true" />
-                  Save contact
-                </a>
-              )}
-            </div>
-          )}
+          <dl className={styles.stats}>
+            <div><dt>Years in software</dt><dd>10+</dd></div>
+            <div><dt>Years in AI</dt><dd>5+</dd></div>
+            <div><dt>Projects</dt><dd>{projectCount}</dd></div>
+          </dl>
         </section>
 
-        <div className={styles.details}>
-          <section id="contact" className={styles.section} aria-labelledby="contact-title">
-            <header className={styles.sectionHead}>
-              <p className={styles.eyebrow}>01 / Direct lines</p>
-              <h2 id="contact-title">Reach me directly</h2>
-            </header>
-            <ul className={styles.channels}>
-              {phone && (
-                <li>
-                  <a href={phone.href} className={styles.channel}>
-                    <span className={styles.channelIcon}><ActionIcon kind="phone" /></span>
-                    <span className={styles.channelText}><span>Phone</span><strong>{phone.display}</strong></span>
-                  </a>
-                  <CopyButton value={phone.display} label="phone number" />
-                </li>
-              )}
-              {whatsapp && (
-                <li>
-                  <a href={whatsapp.href} className={styles.channel} target="_blank" rel="noreferrer">
-                    <span className={styles.channelIcon}><WhatsappIcon size={18} /></span>
-                    <span className={styles.channelText}><span>WhatsApp</span><strong>{whatsapp.display}</strong></span>
-                  </a>
-                  <CopyButton value={whatsapp.display} label="WhatsApp number" />
-                </li>
-              )}
-              {email && (
-                <li>
-                  <a href={email.href} className={styles.channel}>
-                    <span className={styles.channelIcon}><ActionIcon kind="email" /></span>
-                    <span className={styles.channelText}><span>Email</span><strong>{breakableEmail(email.display)}</strong></span>
-                  </a>
-                  <CopyButton value={email.display} label="email address" />
-                </li>
-              )}
-              <li>
-                <Link href="/#contact" className={styles.channel}>
-                  <span className={styles.channelIcon}><MessageSquareText size={18} aria-hidden="true" /></span>
-                  <span className={styles.channelText}><span>Message form</span><strong>Send a project brief</strong></span>
-                  <ArrowUpRight className={styles.channelArrow} size={18} aria-hidden="true" />
-                </Link>
+        <section id="contact" className={styles.connect} aria-labelledby="connect-title">
+          <h2 id="connect-title" className={styles.sectionLabel}>Connect with me</h2>
+          <ul className={styles.tiles}>
+            {tiles.map((tile, index) => (
+              <li key={tile.id} className={styles.tile} data-network={tile.id} style={{ "--i": index } as CSSProperties}>
+                <a
+                  href={tile.href}
+                  className={styles.tileLink}
+                  target={tile.external ? "_blank" : undefined}
+                  rel={tile.external ? "noreferrer me" : undefined}
+                >
+                  <span className={styles.tileIcon}>{tile.icon}</span>
+                  <span className={styles.tileLabel}>{tile.label}</span>
+                  <span className={styles.tileDetail}>{tile.detail}</span>
+                </a>
+                {tile.copy ? (
+                  <CopyButton value={tile.copy.value} label={tile.copy.label} />
+                ) : (
+                  <ArrowUpRight className={styles.tileArrow} size={18} aria-hidden="true" />
+                )}
               </li>
-            </ul>
-            <p className={styles.note}>I usually reply within 24 hours.</p>
-          </section>
+            ))}
+          </ul>
 
-          {profile.socials.length > 0 && (
-            <section className={styles.section} aria-labelledby="profiles-title">
-              <header className={styles.sectionHead}>
-                <p className={styles.eyebrow}>02 / Profiles</p>
-                <h2 id="profiles-title">Find me online</h2>
-              </header>
-              <ul className={styles.profiles}>
-                {profile.socials.map((social) => {
-                  const Icon = socialIcons[social.network];
-                  return (
-                    <li key={social.network}>
-                      <a href={social.url} target="_blank" rel="noreferrer me" className={styles.profileLink}>
-                        <span className={styles.channelIcon}><Icon size={18} /></span>
-                        <span className={styles.channelText}><span>{social.label}</span><strong>{social.handle}</strong></span>
-                        <ArrowUpRight className={styles.channelArrow} size={18} aria-hidden="true" />
-                      </a>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          )}
+          <div className={styles.actions}>
+            {(phone || email) && (
+              <a href="/about/vcard" className={styles.actionPrimary} download="umar-abdullah.vcf">
+                <Download size={18} aria-hidden="true" /> Save my contact
+              </a>
+            )}
+            <Link href="/#contact" className={styles.action}>
+              <Send size={17} aria-hidden="true" /> Send a project brief
+            </Link>
+          </div>
+          <p className={styles.note}>I usually reply within 24 hours.</p>
+        </section>
 
-          {profile.bio.length > 0 && (
-            <section className={styles.section} aria-labelledby="background-title">
-              <header className={styles.sectionHead}>
-                <p className={styles.eyebrow}>03 / Background</p>
-                <h2 id="background-title">Who you will be working with</h2>
-              </header>
-              <div className={styles.bio}>
-                {profile.bio.map((paragraph) => <p key={paragraph.slice(0, 32)}>{paragraph}</p>)}
-              </div>
-              <dl className={styles.stats}>
-                <div><dt>Software engineering</dt><dd>10 years</dd></div>
-                <div><dt>AI engineering</dt><dd>5 years</dd></div>
-              </dl>
-            </section>
-          )}
-
-          <section className={styles.cta} aria-labelledby="cta-title">
-            <h2 id="cta-title">Have a system to build?</h2>
-            <p>Share the problem, the constraints, and the timeline, and I will get back to you.</p>
-            <div>
-              <Link href="/#contact" className={styles.actionPrimary}>Send a project brief <ArrowUpRight size={18} aria-hidden="true" /></Link>
-              <Link href="/work" className={styles.action}>Browse the work</Link>
+        {profile.bio.length > 0 && (
+          <section className={styles.about} aria-labelledby="bio-title">
+            <h2 id="bio-title" className={styles.sectionLabel}>About me</h2>
+            <div className={styles.bio}>
+              {profile.bio.map((paragraph) => <p key={paragraph.slice(0, 32)}>{paragraph}</p>)}
             </div>
+            <Link href="/work" className={styles.textLink}>Browse the work <ArrowUpRight size={16} aria-hidden="true" /></Link>
           </section>
-        </div>
+        )}
       </main>
       <Footer settings={settings} />
-      {actions.length > 0 && <QuickContactBar actions={actions} watch="primary-actions" />}
+      {quickActions.length > 0 && <QuickContactBar actions={quickActions} watch="contact" />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
     </div>
   );
 }
+

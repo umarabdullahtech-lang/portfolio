@@ -80,7 +80,7 @@ export function QuickContactBar({ actions, watch }: { actions: QuickAction[]; wa
   return (
     <nav className={styles.quickBar} data-visible={visible || undefined} aria-label="Quick contact" inert={!visible}>
       {actions.map((action) => (
-        <a key={action.kind} href={action.href} className={styles.quickAction} target={action.kind === "whatsapp" ? "_blank" : undefined} rel={action.kind === "whatsapp" ? "noreferrer" : undefined}>
+        <a key={action.kind} href={action.href} className={styles.quickAction} data-kind={action.kind} target={action.kind === "whatsapp" ? "_blank" : undefined} rel={action.kind === "whatsapp" ? "noreferrer" : undefined}>
           <ActionIcon kind={action.kind} />
           <span>{action.label}</span>
         </a>
